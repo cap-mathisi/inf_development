@@ -1,0 +1,116 @@
+﻿@page "{standardCkey:decimal?}"
+@namespace sspx.Areas.Admin.Pages
+@model StandardPageModel
+@using sspx.Areas.Admin.data
+@using sspx.core.entities
+@using sspx.infra.data;
+@using sspx.web.Helpers;
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    var pageLoadingWithoutModel = (Model.StandardSearchModel == null);
+    if (pageLoadingWithoutModel == true)
+    {
+        var searchModelBackup = HttpContext.Session.Get<SearchModel>("standardSearchModel");
+        if(searchModelBackup != null)
+        {
+            Model.StandardSearchModel = searchModelBackup;
+        }
+    }
+}
+
+@section leftSection {
+    <partial name="_Search" for="StandardSearchModel" />
+}
+
+@section mainSection {
+    <div class="row">
+        <div class="col-sm-8">
+            <h5>Create Standard@* TODO CS2 @Model.Title*@</h5>
+        </div>
+        @if (Model.EditMode == true)
+        {
+            <div class="col-sm-4">
+                <i class="fas fa-times fa-lg text-danger align-middle mr-2"></i>
+                <small><a href="#" class="text-danger" data-toggle="modal" data-target="#removeModal">Remove this Standard</a></small>
+            </div>
+        }
+    </div>
+
+    @if (string.IsNullOrWhiteSpace(@Model.ErrorMessage) == false)
+    {
+        <p class="text-danger">@Model.ErrorMessage</p>
+    }
+    <div asp-validation-summary="All" class="text-danger"></div>
+    @if (string.IsNullOrWhiteSpace(@Model.StatusMessage) == false)
+    {
+        <p class="text-success">@Model.StatusMessage</p>
+    }
+
+    <form method="post">
+        <input type="hidden" asp-for="StandardCkey" />
+        <div class="form-row">
+            <div class="form-group col">
+                <label asp-for="StandardName"></label>
+                <input asp-for="StandardName" />
+            </div>
+            <div class="form-group col">
+                <label asp-for="Description"></label>
+                <input asp-for="Description" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="ml-3">
+                <label asp-for="Active"></label>
+                <input type="checkbox" asp-for="Active" />
+                <span id="activeIndicator"></span>
+                <!-- TODO: show as button
+                            https://getbootstrap.com/docs/4.0/components/buttons/#checkbox-and-radio-buttons
+                        <div class="btn-group-toggle" data-toggle="buttons">
+                          <label class="btn btn-secondary active">
+                            <input type="checkbox" checked autocomplete="off"> Checked
+                          </label>
+                        </div>
+
+                        <div class="btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-secondary active">
+                                <input type="checkbox" asp-for="Active" />
+                            </label>
+                        </div>
+                -->
+            </div>
+        </div>
+        <div class="row">
+            <button type="submit" asp-page-handler="Save" class="btn btn-primary btn-sm ml-3">Save</button>
+            @if (Model.EditMode == true)
+            {
+                <small class="align-self-center ml-4"><a asp-area="Admin" asp-page="Standard" asp-route-standardCkey="@DefaultValue.Ckey">Cancel changes</a></small>
+            }
+        </div>
+    </form>
+
+    <!-- Modal -->
+    <div class="modal fade" id="removeModal" tabindex="-1" role="dialog" aria-labelledby="removeModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeModalLongTitle">Remove Standard</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-muted">Group Name</div>
+                    <div>@Model.StandardName</div>
+                    <div class="text-danger">Are you sure you want to remove?</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                    <form method="post">
+                        <button type="submit" asp-page-handler="Delete">Remove</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}

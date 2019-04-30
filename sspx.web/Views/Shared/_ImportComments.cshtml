@@ -1,0 +1,213 @@
+﻿@model List<sspx.web.Models.ImportComments>
+
+<script>
+
+    $(document).ready(function () {
+        $("select").kendoMultiSelect({
+            placeholder: "ALL"
+            //nonSelectedText: 'ALL'
+        });
+
+
+        //$('select').on('change', function () { //attach event handler to select's change event. 
+        //    //use a more specific selector
+
+        //    if ($(this).val() === "") { //checking to see which option has been picked
+
+        //        $(this).addClass('unselected');
+        //    } else {                   // add or remove class accordingly
+        //        $(this).removeClass('unselected');
+        //    }
+        //});
+
+    });
+
+    var AllReviewerID = [], protocolVersionKey;
+
+    function RadioSelect(value, versionKey, dropdownID) {
+        //var radioId = value.id
+        protocolVersionKey = versionKey;                    
+        var ReviewerIDList = $('select#' + dropdownID).val();
+        //alert(ReviewerIDList)
+        if (ReviewerIDList == "") {
+            //alert(1)
+            var versions = JSON.parse('@Html.Raw(Json.Serialize(Model))');
+            $.each(versions, function (index, item) {
+
+                if (item.protocolVersionsKey == versionKey) {
+                    //alert(item.protocolVersionsKey)
+                    $.each(item.reviewers, function (index1, item1) {
+                        //alert(item1.reviewerID);
+                        AllReviewerID.push(item1.reviewerID);
+                        //AllRL = AllRL + ',' + item1.reviewerID;
+                    });
+                }
+            });
+        }
+        else {
+            //alert(ReviewerIDList)
+            AllReviewerID = ReviewerIDList;
+            //AllRL = ReviewerIDList;
+        }
+    }
+
+
+    function SelectChange(value, VersionKey, LabelID) {
+        $('.radio').prop('checked', false);
+        var id = value.id, commentCount = 0;
+        var ReviewerIDList = $('select#' + id).val();
+        //alert(id)
+        AllReviewerID = ReviewerIDList;
+        //AllRL = ReviewerIDList;
+        var versions = JSON.parse('@Html.Raw(Json.Serialize(Model))');
+        //alert(ReviewerIDList);
+        //alert(JSON.stringify(versions));
+        if (ReviewerIDList != '') {
+            ReviewerIDList.forEach(function (SelectedReviewerID) {
+
+                $.each(versions, function (index, item) {
+
+                    if (item.protocolVersionsKey == VersionKey) {
+                        $.each(item.reviewers, function (index1, item1) {
+                            if (SelectedReviewerID == item1.reviewerID) {
+                                //alert(item1.reviewerID);
+                                commentCount = commentCount + item1.reviewerComments;
+                                //alert(commentCount)
+                            }
+                        });
+                    }
+                });
+            });
+            //$('select#' + id + 'option[value="000"]').remove();
+            //$('#' + LabelID + "option").slice(index1, index2).remove();
+            //$('select#' + id + 'option[value="000"]').remove();
+            //alert(id);
+            $('select#' + id + ' option[value="000"]').remove();
+            $('#' + LabelID).html(commentCount);
+        }
+        else if (ReviewerIDList == '' || ReviewerIDList == ',') {
+            //alert(1)
+            //$('select#' + id+' option').removeAttr("selected");
+            // $('select#' + id).val($('# selectbox > option:first').val())
+            // $('select#' + id + ' option[value=000]').prop('selected', 'selected').change();
+            //$('select#' + id).val("000");
+            //$('select#' + id).val("000").change();
+            $('select#' + id + ' option[value="000"]').remove();
+            //alert(id)
+            $.each(versions, function (index, item) {
+                if (item.protocolVersionsKey == VersionKey) {
+                    $.each(item.reviewers, function (index1, item1) {
+                        commentCount = commentCount + item1.reviewerComments;
+                        //alert(commentCount)
+                    });
+                }
+            });
+            $('#' + LabelID).html(commentCount);
+        }
+    }
+
+    function ImportComment() {
+
+
+        var userID = AllReviewerID.toString();
+
+        $.ajax({
+            type: "POST",
+            //url: "/Home/ImportCommentToCurrentVersion/",
+            url: "../SSPxImportComment/ImportCommentsVersion/" + protocolVersionKey + "/" + userID +"/"+@ViewBag.WorkingProtocolVersionKey,
+            //contentType: "application/json; charset=utf-8",
+
+            data: { 'protocolVersionKey': protocolVersionKey, 'userID': userID, 'WorkingProtocolVersionKey': @ViewBag.WorkingProtocolVersionKey},
+            dataType: "html",
+            success: function (result, status, xhr) {
+                $('#alertMessage').html('Imported successfully!').fadeIn().delay(3000).fadeOut('slow');
+            },
+            error: function (xhr, status, error) {
+                $("#bodyImportProtocol").html("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
+            }
+        });
+    }
+        
+</script>
+
+<style>
+    table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    td, th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #dddddd;
+    }
+
+    /*::placeholder {
+        color: red;
+        opacity: 1; /* Firefox 
+    }
+
+    :-ms-input-placeholder { /* Internet Explorer 10-11 
+        color: red;
+    }
+
+    ::-ms-input-placeholder { /* Microsoft Edge 
+        color: red;
+    }*/
+
+</style>
+
+<div id="ImportComment">
+    <table>
+        <tr>
+            <th>Select</th>
+            <th>Version</th>
+            <th>Reviewer</th>
+            <th>Comments</th>
+        </tr>
+        @{
+            int ID = 100, LabelID = 2000, RadioID = 3000;
+        }
+
+        @foreach (var item in Model)
+        {
+            ID = ID + 1;
+            LabelID = LabelID + 1;
+            <tr>
+                <td><input type="radio" id="@RadioID" name="Group" class="radio" onclick="RadioSelect(this,'@item.ProtocolVersionsKey',@ID)" name="contact" /></td>
+                <td><span>@item.Version</span></td>
+                <td>
+
+                    <select id="@ID" class="multiselectdropdown" onchange="SelectChange(this, '@item.ProtocolVersionsKey','@LabelID')" style="width: 200px;" >
+                        <option value="" selected="selected">All</option>
+                        @foreach (var value in item.Reviewers)
+                        {
+                            <option value="@value.ReviewerID">@value.ReviewerName</option>
+                        }
+                    </select>
+                </td>
+                <td>
+                    <label id="@LabelID">@item.Comments</label>
+                </td>
+            </tr>
+        }
+        @if (Model == null || Model.Count == 0)
+        {
+            <tr>
+                <td colspan="4" align="center">No data found.</td>
+            </tr>
+        }
+
+    </table>
+    <div class="modal-footer">
+        <button id="EditButton" type="button" class="btn btn-success" onclick="ImportComment()">Import</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+    </div>
+</div>
+
+

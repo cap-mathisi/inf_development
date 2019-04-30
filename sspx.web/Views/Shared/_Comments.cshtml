@@ -1,0 +1,188 @@
+﻿@model sspx.web.Models.ChecklistNoteViewModel
+<style>
+    #DeleteMetaData .comment-sample {
+        overflow: auto;
+        height: 100px;
+        width: 95%;
+        border: 1px solid #cccccc;
+        padding: 3px 5px;
+    }
+
+    #commentSection {
+        padding: 5px;
+    }
+
+    /*table {
+        width: 100%;
+        margin: 20px 0;
+        border-collapse: collapse;
+    }
+
+    table, th, td {
+        border: 1px solid #cdcdcd;
+    }
+
+       table th, table td {
+            padding: 5px;
+            text-align: left;
+      }*/
+
+</style>
+<div id="EditMetaData" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <textarea id="metaEditor" style="height:300px; width:100%; clear:both" spellcheck="false"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="EditButton" type="button" class="btn btn-success" onclick="saveComment($(this));" disabled="disabled">Save</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="ImportMetaData" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import Comments</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="bodyImportProtocol">
+
+                </div>
+                @*<div class="modal-footer">
+                    <button id="EditButton" type="button" class="btn btn-success" disabled="disabl  ed">Import</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>*@
+            </div>
+        </div>
+    </div>
+<div id="DeleteMetaData" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Remove Comment</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove this comment?</p>
+                <div class="comment-sample"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="RemoveComment" type="button" class="btn btn-primary" onclick="removeComment($(this));">Remove</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="Comment" class="panel" style="display:block;">
+    <div class="addMeta" data-toggle="modal" data-target="#EditMetaData" data-type="C" data-id="0"><i class="fas fa-plus"></i> ADD COMMENT</div>
+    @*<div class="addMeta" id="buttonImportMetaData" data-toggle="modal" data-target="#ImportMetaData" data-type="C" data-id="0"> IMPORT COMMENT</div>*@
+    <div id="commentSection" class="innerPanel"></div>
+</div>
+
+<script src="~/js/sspx/commentObject.js?v=20190201"></script>
+<script>
+    var comments = @Html.Raw(Json.Serialize(Model.comments));
+    var commentProtocolCKey = '@Model.protocolCkey';
+    var commentProtocolVersionKey = '@Model.protocolVersionKey';
+
+    function saveComment(button) {
+        var cid = button.attr('data-id');
+        var metadata = $("#metaEditor").data("kendoEditor").value();
+        commentObject.saveComment(cid, metadata);
+        return false;
+    }
+
+    function removeComment(button) {
+        var cid = button.attr('data-id');
+        commentObject.removeComment(cid);
+        return false;
+    }
+
+    $('#EditMetaData').on('show.bs.modal', function (event) {
+        var object = $(event.relatedTarget);
+        var id = object.data('id');
+        var modal = $(this);
+        var title = (id == '0') ? 'Add Comment' : 'Edit Comment';
+        modal.find('.modal-title').text(title);
+        if (id != '0') {
+            var data = commentObject.getCommentById(id);
+            $("#metaEditor").data("kendoEditor").value(data[0].comment);
+        } else {
+            $("#metaEditor").data("kendoEditor").value('');
+        }
+        modal.find('#EditButton').attr('data-id', id).attr('disabled', 'disabled');
+    });
+
+    $('#DeleteMetaData').on('show.bs.modal', function (event) {
+        var object = $(event.relatedTarget);
+        var id = object.data('id');
+        var modal = $(this);
+        var data = commentObject.getCommentById(id);
+        modal.find('.comment-sample').html(data[0].comment);
+        modal.find('#RemoveComment').attr('data-id', id);
+    });
+
+    function setMetaSaveActive() {
+        $('#EditMetaData #EditButton').removeAttr('disabled');
+    }
+
+    $(document).ready(function () {
+        commentObject.init(comments, commentProtocolVersionKey);
+        commentObject.populateComment();
+        $("#metaEditor").kendoEditor({
+            pasteCleanup: {
+                all: false,
+                css: false,
+                keepNewLines: false,
+                msAllFormatting: false,
+                msConvertLists: false,
+                msTags: false,
+                none: true,
+                span: false
+            },
+            resizable: {
+                content: false,
+                toolbar: false
+            },
+            execute: setMetaSaveActive,
+            keyup: setMetaSaveActive
+        }).getKendoEditor();
+    });
+
+    $("#buttonImportMetaData").click(function () {
+        @*$.get('@Url.Action("ImportCommentVersions", "Home")', {}, function (response) {
+            $("#bodyImportProtocol").html(response);*@
+
+        $.ajax({
+            type: "GET",
+            url: "../SSPxImportComment/ImportComments/"+commentProtocolCKey + "/" + commentProtocolVersionKey,
+            contentType: "application/json; charset=utf-8",
+            data: { 'ProtocolsKey': commentProtocolCKey, 'WorkingProtocolVersionKey': commentProtocolVersionKey },
+            dataType: "html",
+            success: function (result, status, xhr) {
+
+                //var markup = "<tr><td><input type='checkbox' name='record'></td><td>" + 'name' + "</td><td>" + 'email' + "</td></tr>";
+                //$("table tbody").append(markup);
+
+                $("#bodyImportProtocol").html(result);
+            },
+            error: function (xhr, status, error) {
+                $("#bodyImportProtocol").html("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
+            }
+        });
+    });
+
+</script>

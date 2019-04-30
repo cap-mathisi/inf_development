@@ -1,0 +1,111 @@
+﻿@model sspx.Areas.Admin.data.SearchModel
+
+<style>
+    #searchIconInsideBox {
+        position: relative;
+        z-index: 1;
+        left: -25px;
+        top: 1px;
+        pointer-events: none;
+        width: 0;
+    }
+
+    .searchResultLink:hover{
+        text-decoration: none;
+    }
+</style>
+
+<div class="d-flex justify-content-between">
+    <small><span id="itemCount"></span> @Model.ItemsName</small>
+    <a href="@Model.PageUrl">
+        <button type="button" class="btn btn-outline-warning btn-sm mb-3"><i class="fas fa-plus"></i>&nbsp;&nbsp;Create</button>
+    </a>
+</div>
+<div class="card mb-2">
+    <form class="form-inline" role="form">
+        <input type="text" id="searchFilter" class="form-control ml-0 col-sm-12" placeholder="Search" />
+        <i id="searchIconInsideBox" class="fas fa-search text-secondary"></i>
+    </form>
+</div>
+<div id="searchResults">
+    @foreach (var searchItem in Model.SearchItems)
+    {
+        <a class="searchResultLink" href='@string.Format("{0}/{1}", @Model.PageUrl, @searchItem.Id)'>
+            <div class="media rounded pl-1 pr-2">
+                <div class="media-body">
+                    <p class="card-title mt-2 ml-2">@searchItem.Title</p>
+                    <p class="card-subtitle mb-2 ml-2 text-muted">@searchItem.SubTitle</p>
+                </div>
+                @if (searchItem.Active == true)
+                {
+                    <i class="fas fa-circle text-primary align-self-center ml-3"></i>
+                }
+                else
+                {
+                    <i class="fas fa-circle text-muted align-self-center ml-3"></i>
+                }
+            </div>
+        </a>
+    }
+</div>
+
+<script type="text/javascript">
+
+    function updateSearchResults() {
+
+        var searchTerm = $('#searchFilter').val().toLowerCase();
+        sessionStorage['@Model.SessionVarName'] = searchTerm
+
+        $('#searchResults .media').each(function () {
+            if ($(this).text().toLowerCase().indexOf(searchTerm) > -1) {
+                $(this).parent().show();
+            }
+            else {
+                $(this).parent().hide();
+            }
+        });
+    }
+
+    function updateActiveIndicator() {
+        if ($('#Active').prop('checked')) {
+            $('#activeIndicator').html('<span>ON</span><i class="fas fa-circle text-primary ml-1"></i>');
+        }
+        else {
+            $('#activeIndicator').html('<span>OFF</span><i class="fas fa-circle text-muted ml-1"></i>');
+        }
+    }
+
+    function updateItemCount() {
+        var count = $("#searchResults").find(".media:visible").length;
+        $("#itemCount").text(count);
+    }
+
+    $(document).ready(function () {
+
+        if (sessionStorage['@Model.SessionVarName']) {
+            $('#searchFilter').val(sessionStorage['@Model.SessionVarName']);
+            updateSearchResults();
+        }
+
+        updateActiveIndicator();
+        updateItemCount();
+
+        $('#searchResults .media').hover(
+            function () {
+                $(this).addClass('bg-light').css('cursor', 'pointer');
+            }, function () {
+                $(this).removeClass('bg-light');
+            }
+        );
+
+        $('#searchFilter').keyup(function () {
+            updateSearchResults();
+            updateItemCount();
+        });
+
+        $('#Active').change(function () {
+            updateActiveIndicator();
+        });
+    });
+
+</script>

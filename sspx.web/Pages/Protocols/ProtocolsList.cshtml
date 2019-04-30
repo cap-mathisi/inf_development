@@ -1,0 +1,12 @@
+﻿@page
+@model sspx.web.Pages.Protocols.IndexModel
+@{
+    Layout = null;
+}
+<h2>Protocols (Razor Page)</h2>
+<ul>
+    @foreach (var protocol in Model.Protocols)
+    {
+        <li>@protocol.ProtocolId<br />@protocol.ProtocolName</li>
+    }
+</ul>

@@ -1,0 +1,102 @@
+﻿@page
+@model sspx.web.Areas.Workflow.Pages.WorkflowModel
+@using sspx.Areas.Admin.data
+@using sspx.core.entities
+@using sspx.web.Helpers;
+@using Microsoft.Extensions.Options
+@using sspx.web.Services
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = $"Work Flow";
+}
+
+@{
+    Layout = "~/Views/Shared/_ProtocolLayout.cshtml";
+    var pid = Model.WorkflowModelInput.ProtocolKey + "_C";
+    var reviewerAssign = new sspx.web.Models.UserAssignmentModel { role = "Reviewer", title = "Reviewer" };
+    var panelreviewerAssign = new sspx.web.Models.UserAssignmentModel { role = "PanelReviewer", title = "Panel Reviewer" };
+}
+@section topScripts {
+    <style>
+        #protocolNodes .k-state-selected {
+            background-color: #A3C2A3;
+        }
+
+        .fontSize {
+            font-size: 15px;
+        }
+    </style>
+}
+@section topSection {
+
+    <div class="topmenu active">Workflow</div>
+    <div class="topmenu"><a href="../sspxprotocol/@Model.WorkflowModelInput.ProtocolKey">Content</a></div>
+    <div class="topmenu"><a href="../sspxprotocolnote/@Model.WorkflowModelInput.ProtocolKey">Notes & References</a></div>
+    <div class="topmenu"><a href="#" onclick="goToPreview('full'); return false;">Full Preview</a></div>
+}
+
+@section midSection {
+    <div class="container">
+
+        <div class="row">
+            <div class="col-md-12">
+                <span><h6>Where you are in the process?</h6></span>
+                <div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Document Status</th>
+                                <th>Author Action</th>
+                                <th>Last Modified Date</th>
+                                <th>Comments</th>
+                            </tr>
+                        </thead>
+                        @if (Model.WorkflowModelInput.ProtocolVersionsStates != null)
+                        {
+
+                            @for (int i = 0; i < Model.WorkflowModelInput.ProtocolVersionsStates.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        <p class="card-title mt-2 ml-2">@Model.WorkflowModelInput.ProtocolVersionsStates[i].ProtocolVersion</p>
+                                    </td>
+                                    <td>
+                                        <p class="card-subtitle mb-2 ml-2 text-muted">@Model.WorkflowModelInput.ProtocolVersionsStates[i].ReleaseStatus</p>
+                                    </td>
+                                    <td>
+                                        <p class="card-title mt-2 ml-2">@Model.WorkflowModelInput.ProtocolVersionsStates[i].ModifiedDate</p>
+                                    </td>
+                                    <td>
+                                        <p class="card-title mt-2 ml-2">@Model.WorkflowModelInput.ProtocolVersionsStates[i].ModifiedBy</p>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td>
+                                    <div class="col-md-1">
+                                        <div class="col-md-4"><span><b>No status found against this protocal version</b></span></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        <tr></tr>
+                    </table>
+                </div>
+
+
+            </div>
+         
+        </div>
+
+    </div>
+
+}
+@section rightSection {
+    <div class="col-md-7">
+        <h6>Want to review the changes ?</h6>
+    </div>
+}

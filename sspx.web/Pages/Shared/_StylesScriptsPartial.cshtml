@@ -1,0 +1,45 @@
+﻿@*
+    For CSS and scripts that are used across the entire site.
+    Note: integrity attributes in certain tags seems to interfere when fallbacks are active.
+          Can use new (2019) asp-suppress-fallback-integrity="true" attribute to skip the check
+          for local files if they are failing due to annoying binary difference e.g. line-ending encoding
+          https://github.com/aspnet/Mvc/pull/7904/files
+*@
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+      asp-fallback-href="~/css/bootstrap.min.css"
+      asp-fallback-test-class="sr-only"
+      asp-fallback-test-property="position"
+      asp-fallback-test-value="absolute"
+      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+      crossorigin="anonymous">
+<link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.6.3/css/all.css"
+      integrity="sha384-LRlmVvLKVApDVGuspQFnRQJjkv0P7/YFrw84YYQtmYG4nK8c+M+NlmYDCv0rKWpG"
+      crossorigin="anonymous">
+
+<environment include="Development">
+    <script src="https://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/popper.js@1.14.3/dist/umd/popper.js"
+            crossorigin="anonymous"></script>
+</environment>
+<environment exclude="Development">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+            asp-fallback-src="~/js/jquery.min.js"
+            asp-fallback-test="window.jQuery"
+            asp-suppress-fallback-integrity="true"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+            asp-fallback-src="~/js/popper/umd/popper.min.js"
+            asp-fallback-test="window.Popper"
+            crossorigin="anonymous"></script>
+</environment>
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+        asp-fallback-src="~/js/bootstrap.min.js"
+        asp-fallback-test="window.jQuery && window.jQuery.fn && window.jQuery.fn.modal"
+        asp-suppress-fallback-integrity="true"
+        integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+        crossorigin="anonymous"></script>

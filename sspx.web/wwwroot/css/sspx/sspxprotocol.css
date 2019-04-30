@@ -1,0 +1,451 @@
+﻿.protocolEditorText {
+    /* TODO CS2: remove this class when we handle "% pixel" changes-- https://trello.com/c/dlpNLR7e */
+    font-family: Arial;
+    font-size: 14px;
+}
+
+#protocolNodes, #protocolNotes {
+    background-color: #F2F2F2;
+    height: 560px;
+    padding: 5px;
+    overflow: auto;
+}
+
+#protocolNotes {
+    height: 600px;
+}
+
+#protocolNodes li {
+    font-family: Arial;
+    font-size: 14px;
+}
+
+#protocolNodes li [data-role=display] {
+    padding: 5px 0 5px 5px !important;
+}
+
+#protocolNotes .NoteTitle {
+    padding: 5px;
+    cursor: pointer;
+    width: 100%;
+    padding-left: 20px;
+    text-indent: -20px;
+}
+
+#protocolNotes .NoteTitle.active {
+    background-color: #A3C2A3;
+    font-style: italic;
+}
+
+#protocolNodes .itemMenu {
+    display: none;
+    cursor: pointer;
+    font-weight: 600;
+    position: absolute;
+    width: 45%;
+    margin-left: -38%;
+}
+
+#protocolNotes .itemMenu {
+    display: none;
+    cursor: pointer;
+    font-weight: 600;
+    position: relative;
+    float: right;
+}
+
+#protocolNodes .itemMenu i {
+    color: white;
+    background-color: #009BC2;
+    padding: 4px 5px;
+    width: 12px;
+    float: right;
+    margin-left: 5px;
+}
+
+.itemActionMenu {
+    position: absolute;
+    z-index: 999999;
+}
+
+.itemActionMenu .mainMenu {
+    float: left;
+    width: 180px;
+    background-color: #E2EBE2;
+    color: #229CD5;
+    padding: 5px;
+}
+
+.itemActionMenu .subMenu {
+    float: left;
+    background-color: #E2EBE2;
+    padding: 5px;
+    border-bottom: 1px solid #D9D9D9;
+}
+
+.itemActionMenu .mainMenu .dropdown-item, .itemActionMenu .subMenu .dropdown-item {
+    border-bottom: 1px solid #D9D9D9;
+}
+
+.itemActionMenu .subMenu .menuLabel {
+    padding-top: 5px;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.itemActionMenu .subMenu select {
+    padding: 5px;
+}
+
+.itemActionMenu .dropdown-item {
+    padding: 4px 8px !important;
+    font-weight: 600;
+}
+
+.itemActionMenu .dropdown-item span {
+    width: 10px;
+    float: right;
+}
+
+.badge {
+    padding: 5px;
+    background-color: #D95757;
+    color: #ffffff;
+    display: inline;
+}
+
+.topmenu {
+    float: left;
+    padding: 5px 10px 2px 5px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #009BC2;
+    font-weight: 600;
+    margin: 10px;
+}
+
+.topmenu.active {
+    border-bottom: 2px solid #FF6500;
+    color: #808080;
+    cursor: default;
+}
+
+.panelSection {
+    border: 1px solid #000000;
+    width: 100%;
+    min-height: 598px;
+    clear: both;
+}
+
+.panelmenu {
+    float: left;
+    padding: 5px 10px 1px 5px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #009BC2;
+    font-weight: 600;
+    margin: 0px 10px 2px 10px;
+}
+
+.panelmenu.active {
+    border-bottom: 2px solid #FF6500;
+    color: #808080;
+    cursor: default;
+}
+
+.panel {
+    display: none;
+    height: 598px;
+}
+
+.panel .title {
+    background-color: #c8eac8;
+    padding: 3px 5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    clear: both;
+}
+
+.panel .ReferTitle, .panel .ComTitle {
+    float: left;
+    width: 83%;
+    font-size: 13px;
+    color: #555555;
+}
+
+.panel .ReferNumber {
+    float: left;
+    width: 8%;
+    padding: 10px;
+    border: 1px solid #888;
+    margin-right: 10px;
+    text-align: center;
+    background-color: #cccccc;
+    cursor: pointer;
+    height: 35px;
+}
+
+.panel .ComName {
+    float: left;
+    background-color: #eee;
+    border: #000 1px solid;
+    border-radius: 30px;
+    padding: 8px;
+    margin-right: 10px;
+    text-transform: uppercase;
+}
+
+.panel .ReferControl, .panel .ComControl {
+    float: right;
+    font-size: 16px;
+    color: #555555;
+    cursor: pointer;
+}
+
+.topmenuright {
+    margin: 10px 0px 10px auto;
+    background-color: #cccccc;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 5px 20px;
+    cursor: pointer;
+}
+
+.topmenuright:hover {
+    text-decoration: none;
+    color: #ffffff;
+}
+
+.topmenuright.active {
+    background-color: #019BBF;
+}
+
+.sectionHeader {
+    color: #808080;
+    padding: 5px 0px;
+    background-color: #ffffff;
+    width: 100%;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.contentArea .contentPanel {
+    display: none;
+    padding: 10px;
+}
+
+.contentArea .subHeader {
+    padding-top: 3px;
+    padding-bottom: 1px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-bottom: 5px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #808080;
+    background-color: #cccccc;
+    min-height: 30px;
+}
+
+.contentArea .subHeader #subText {
+    display: inline;
+    float: left;
+    width: 400px;
+}
+
+.contentArea .subHeader #text {
+    display: inline-block;
+    white-space: nowrap;
+    width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+#col1 .subHeader {
+    height: 30px;
+    padding: 5px 0px;
+}
+
+.nodeType {
+    width: 13%;
+    padding: 8px 5px;
+    font-size: 9px;
+    text-align: center;
+    color: #ffffff;
+    margin: 3px;
+    border-radius: 5px;
+    box-shadow: 3px 3px 3px #999999;
+    float: left;
+    height: 80px;
+    cursor: pointer
+}
+
+.nodeType:hover {
+    background-color: #999999;
+    color: #ffffff !important;
+}
+
+.nodeType.active {
+    background-color: #555555;
+    color: #ffffff !important;
+}
+
+.nodeType span {
+    font-size: 30px;
+    display: block;
+    padding-bottom: 5px;
+}
+
+.itemActionMenu .nodeType {
+    color: #000000;
+}
+
+.contentArea .nodeInfo {
+    padding-top: 10px;
+    clear: both;
+}
+
+.contentArea .noteInfo {
+    padding: 10px;
+}
+
+.contentArea .textLabel {
+    padding-top: 5px;
+    font-weight: 600;
+}
+
+.contentArea input[type=radio], .contentArea input[type=checkbox] {
+    transform: scale(1.3);
+    vertical-align: middle;
+}
+
+.contentArea .checkboxGroup {
+    margin: 5px 0px;
+    padding: 5px 10px;
+    background-color: #ffffff;
+    width: 100%;
+    height: 140px;
+    overflow: auto;
+}
+
+.contentArea .contentPanel .comment {
+    padding: 3px;
+    width: 100%;
+    height: 80px;
+}
+
+.contentArea .subHeader .btn, .contentArea .subHeader .dropdown-item {
+    font-size: 12px !important;
+}
+
+.mce-widget.mce-notification.mce-notification-warning, .mce-branding.mce-widget.mce-label {
+    display: none !important;
+}
+
+.panelSection #Preview .itemType4, .panelSection #Preview .itemType17, .panelSection #Preview .itemType23, .panelSection #Preview .itemType24 {
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.panelSection .panel .innerPanel {
+    overflow: auto;
+    height: 94%;
+    clear: both;
+    padding: 0px 5px;
+}
+
+.addMeta {
+    cursor: pointer;
+    float: right;
+    border: 1px solid blue;
+    padding: 3px 8px;
+    margin-bottom: 3px;
+    background-color: #019BBF;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.userAssignmentContainer {
+    border: 2px solid #ffffff;
+    border-radius: 5px;
+    margin: 10px 0px 20px 0px;
+    min-height: 30px;
+}
+
+.userAssignmentContainer .searchContainer {
+    background-color: #F2F2F2;
+    margin-top: -15px;
+    margin-left: 10px;
+    width: 70%;
+}
+
+.userAssignmentContainer .title {
+    width: 100%;
+    line-height: 25px;
+    padding: 3px 5px;
+}
+
+.userAssignmentContainer .title i {
+    margin-top: 5px;
+    margin-right: 10px;
+    cursor: pointer;
+    float: right;
+}
+
+.userAssignmentContainer .searchResult {
+    background-color: #F2F2F2;
+    padding: 10px;
+    width: 40%;
+    height: 200px;
+    overflow: auto;
+    position: absolute;
+}
+
+.userAssignmentContainer .searchResult .searchName {
+    width: 90%;
+    padding: 3px;
+    margin-top: 5px;
+}
+
+
+.userAssignmentContainer .userContainer {
+    padding: 10px 5px;
+}
+
+.userAssignmentContainer .userContainer .user {
+    line-height: 30px;
+}
+
+.userAssignmentContainer .userContainer .user:hover {
+    background-color: #F2F2F2;
+}
+
+.userAssignmentContainer .userContainer .user i {
+    margin-top: 8px;
+    margin-right: 10px;
+    cursor: pointer;
+    float: right;
+    color: red;
+}
+
+.userAssignmentContainer .searchContainer .user {
+    line-height: 30px;
+    border-bottom: 1px solid #cccccc;
+}
+
+.userAssignmentContainer .searchUser .user {
+    font-size: 12px;
+    cursor: pointer;
+}
+
+#DynamicPreview .title, #DynamicPreview .section, #DynamicPreview .subtitle {
+    font-weight: bold;
+    margin-bottom: 10px;
+    background-color: #ffffff;
+}
+
+#DynamicPreview .section {
+    font-size: 16px;
+    margin-top: 20px;
+}

@@ -1,0 +1,270 @@
+﻿@using sspx.web.Models
+@using sspx.web.Helpers
+@using sspx.core.entities
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject sspx.web.Services.IProtocolPermissions ProtocolPermissions
+@model NavMenuModel
+
+@if (Model.SignedIn)
+{
+    string firstMenuAlign = (Model.FirstMenuSelection == "Menu" || Model.FirstMenuSelection == "Dashboard") ? "mr-md-auto" : string.Empty;
+    string secondMenuAlign = (Model.SecondMenuSelection == "Select") ? "mr-auto" : string.Empty;
+
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark text-nowrap p-0 mb-4">
+        <a asp-area="Dashboard" asp-page="/Index" class="navbar-brand p-0 m-0">
+            <img alt="CAP Logo" src="~/images/CAP_logo_rgb_no_text.png" style="width:40px;height:40px;background-color:white">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapsible" aria-controls="navbarCollapsible" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapsible">
+            <ul class="col navbar-nav d-flex pr-0">
+                <li class="nav-item @firstMenuAlign">
+                    <div class="nav-item dropdown bg-primary px-2">
+                        <a class="nav-link dropdown-toggle text-white" href="#" id="navbarOne" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            @Model.FirstMenuSelection
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" asp-area="Dashboard" asp-page="/Index">Dashboard</a>
+                            @if (Model.AdminMenuPermission != AdminMenuPermissionTypes.None)
+                            {
+                                <a class="dropdown-item" asp-area="Admin" asp-page="/Index">Admin</a>
+                            }
+                            <a class="dropdown-item" asp-area="Protocols" asp-page="/MyProtocols">My Protocols</a>
+                        </div>
+                    </div>
+                </li>
+
+                @if (Model.FirstMenuSelection == "Admin")
+                {
+                    <li class="nav-item mr-auto">
+                        <div class="nav-item dropdown px-2">
+                            <a class="nav-link dropdown-toggle text-white" href="#" id="navbarTwo" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                @Model.SecondMenuSelection
+                            </a>
+                            <div class="dropdown-menu">
+                                @if (Model.AdminMenuPermission == AdminMenuPermissionTypes.StaffAdmin)
+                                {
+                                    <a class="dropdown-item disabled" href="#">Create Affiliation</a>
+                                    <a class="dropdown-item disabled" href="#">Create Author Role</a>
+                                }
+                                @if (Model.AdminMenuPermission == AdminMenuPermissionTypes.StaffAdmin || Model.AdminMenuPermission == AdminMenuPermissionTypes.PrimaryAuthorAdmin)
+                                {
+                                    <a class="dropdown-item" asp-area="Admin" asp-page="@AdminNavMenuItem.Protocol.PagePath">Create @AdminNavMenuItem.Protocol.DisplayText</a>
+                                }
+                                @if (Model.AdminMenuPermission == AdminMenuPermissionTypes.StaffAdmin)
+                                {
+                                    <a class="dropdown-item" asp-area="Admin" asp-page="@AdminNavMenuItem.ProtocolGroup.PagePath">Create @AdminNavMenuItem.ProtocolGroup.DisplayText</a>
+                                    <a class="dropdown-item disabled" href="#">Create Protocol Release</a>
+                                    <a class="dropdown-item" asp-area="Admin" asp-page="@AdminNavMenuItem.Qualification.PagePath">Create @AdminNavMenuItem.Qualification.DisplayText</a>
+                                    <a class="dropdown-item disabled" href="#">Create Release</a>
+                                    <a class="dropdown-item" asp-area="Admin" asp-page="@AdminNavMenuItem.Standard.PagePath">Create @AdminNavMenuItem.Standard.DisplayText</a>
+                                    <a class="dropdown-item disabled" href="#">Create User</a>
+                                }
+                            </div>
+                        </div>
+                    </li>
+                }
+                else if (Model.FirstMenuSelection == "Protocols")
+                {
+                    <li class="nav-item @secondMenuAlign">
+                        <div class="nav-item dropdown px-2">
+                            <a id="navbarTwoProtocol" class="nav-link dropdown-toggle text-white" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                                @* Note: no data-toggle="dropdown" - handled with JS below *@
+                                @Model.SecondMenuSelection
+                            </a>
+                            <div id="protocolsDropDown" class="dropdown-menu pb-0">
+                                <div class="card border-0">
+                                    <form class="form-inline">
+                                        <input id="protocolSearchFilter" class="mt-2 ml-3 mr-2 pl-2" placeholder="Select Protocol" />
+                                        <div class="mt-2 mb-3 mx-2">
+                                            <span class="mr-2">Show:</span>
+                                            <a href="#" class="alert-link toggleRoleFilter">All</a> |
+                                            <a href="#" class="mx-1 toggleRoleFilter">Author</a> |
+                                            <a href="#" class="mx-1 toggleRoleFilter">Reviewer</a>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div id="accordionProtocols">
+                                    @foreach (var protocolGroup in Model.ProtocolGroupMenuItems)
+                                    {
+                                        <div class="card border-0">
+                                            <div class="card-header m-0 p-0" id="heading_@protocolGroup.Id">
+                                                <h5 class="mb-0">
+                                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse_@protocolGroup.Id" aria-expanded="false" aria-controls="collapse_@protocolGroup.Id">
+                                                        <i class="fas fa-chevron-down mr-2"></i>@protocolGroup.Name
+                                                    </button>
+                                                </h5>
+                                            </div>
+                                            <div id="collapse_@protocolGroup.Id" class="collapse" aria-labelledby="heading_@protocolGroup.Id" data-parent="#accordionProtocols">
+                                                @foreach (var protocol in Model.ProtocolMenuItems.Where(protocol => protocol.ParentId == protocolGroup.Id))
+                                                {
+                                                    <div class="card-body m-0 p-2 pl-5">
+                                                        @* TODO CS2 *@
+                                                        @if (ProtocolPermissions.HasPermission(Model.UserKey, protocol.Id, ProtocolPermissionTypes.EditProtocol))
+                                                        {
+                                                            <a class="list-group-item-action" asp-route="SSPxProtocol" asp-route-pid="@protocol.Id">@protocol.Name</a>
+                                                        }
+                                                        else if (ProtocolPermissions.HasPermission(Model.UserKey, protocol.Id, ProtocolPermissionTypes.View))
+                                                        {
+                                                            <a class="list-group-item-action" asp-route="SSPxProtocolReader" asp-route-vid="@protocol.Id">@protocol.Name</a>
+                                                        }
+                                                        @foreach (var role in protocol.UserRoles)
+                                                        {
+                                                            <input type="hidden" class="userRole" value="@role" />
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                    if (Model.SecondMenuSelection != "Select")
+                    {
+                        @*<li class="nav-item">
+                            <a class="nav-link dropdown-toggle text-white" asp-area="Workflow" asp-page="/WorkflowUI/Workflow">Workflow</a>
+                        </li>*@
+
+                        <li class="nav-item">
+                            <div class="nav-item dropdown px-2">
+                                <a class="nav-link dropdown-toggle text-white" href="#" id="navbarThree" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <small>Protocol Editor</small>
+                                </a>
+                                <div class="dropdown-menu">
+                                    @if (ProtocolPermissions.HasPermission(Model.UserKey, Model.SelectedProtocolKey, ProtocolPermissionTypes.EditProtocol))
+                                    {
+                                        <small><a class="dropdown-item" asp-route="SSPxProtocol" asp-route-pid="@Model.SelectedProtocolKey">Protocol Editor</a></small>
+                                    }
+                                    else if (ProtocolPermissions.HasPermission(Model.UserKey, Model.SelectedProtocolKey, ProtocolPermissionTypes.View))
+                                    {
+                                        <small><a class="dropdown-item" asp-route="SSPxProtocolReader" asp-route-vid="@Model.SelectedProtocolKey">Protocol Editor</a></small>
+                                    }
+                                    <small><a class="dropdown-item" asp-route="SSPxCompareVersions" asp-route-pid="@Model.SelectedProtocolKey">Compare Versions</a></small>
+                                    <small><a class="dropdown-item" asp-route="SSPxImportItems" asp-route-pid="@Model.SelectedProtocolKey">Import Items</a></small>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="nav-item mr-auto">
+                            <div class="nav-item dropdown px-2">
+                                <a class="nav-link dropdown-toggle text-white text-wrap" href="#" id="navbarFour" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <small>@Model.ProtocolVersionSelection</small>
+                                    <small>@Model.ProtocolVersionLastUpdated</small>
+                                </a>
+                                <div class="dropdown-menu">
+                                    @foreach (var protocolVersion in Model.ProtocolVersionMenuItems)
+                                    {
+                                        <small><a class="dropdown-item" href="#">v. @protocolVersion.Name (@protocolVersion.LastUpdatedDate.ToShortDateString())</a></small>
+                                    }
+                                </div>
+                            </div>
+                        </li>
+                        @*<li class="nav-item">
+                    <a class="nav-link" href="#">Compare Versions</a>
+                </li>
+                <li class="nav-item mr-auto">
+                    <a class="nav-link" href="#">View Comments</a>
+                </li>*@
+                    }
+                }                
+                <li class="mr-auto">
+                    <div class="nav-item text-white text-truncate p-2"><small>Single Source Product - College of American Pathologists</small></div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-white px-2" href="#" id="navbarUserDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        @Model.UserFullName
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right bg-light" aria-labelledby="navbarUserDropdown">
+                        <a class="dropdown-item" asp-area="Identity" asp-page="/Account/ChangePassword">Change Password</a>
+                        <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })" method="post" id="logoutForm">
+                            <button class="dropdown-item" type="submit">Logout</button>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <script>
+        function updateNavMenuFilter() {
+
+            var filterVisible = ($('#protocolSearchFilter').length > 0);
+            if (filterVisible == false) {
+                return;
+            }
+
+            var showRole = $('a.toggleRoleFilter.alert-link').text();
+            var showRoleFilter = '*';
+            if (showRole == 'Author') {
+                showRoleFilter = ':hidden[value="@RoleTypes.Author"]';
+            }
+            else if (showRole == 'Reviewer') {
+                showRoleFilter = ':hidden[value="@RoleTypes.Reviewer"]';
+            }
+
+            var searchTerm = $('#protocolSearchFilter').val().toLowerCase();
+
+            // protocols
+            $('#accordionProtocols .collapse, .collapsing').children('.card-body').each(function () {
+
+                if ($(this).has(showRoleFilter).length == 0) {
+                    $(this).hide();
+                }
+                else if ($(this).text().toLowerCase().indexOf(searchTerm) > -1) {
+                    $(this).show();
+                }
+                else {
+                    $(this).hide();
+                }
+            });
+
+            // protocol groups
+            $('#accordionProtocols .card').each(function () {
+
+                if ($(this).has('.card-body').has(showRoleFilter).length == 0) {
+                    $(this).hide();
+                }
+                else if ($(this).text().toLowerCase().indexOf(searchTerm) > -1) {
+                    $(this).show();
+                }
+                else {
+                    $(this).hide();
+                }
+            });
+        }
+
+        $('#protocolSearchFilter').keyup(function () {
+            updateNavMenuFilter();
+        });
+        $('.collapse').on('show.bs.collapse', function () {
+            updateNavMenuFilter();
+        });
+
+        $('.toggleRoleFilter').on('click', function (e) {
+            $('.toggleRoleFilter').removeClass('alert-link');
+            $(this).addClass('alert-link');
+            updateNavMenuFilter();
+        });
+
+        // open Protocol drop-down
+        $('#navbarTwoProtocol').on('click', function (event) {
+            $('#protocolsDropDown').toggleClass('show');
+        });
+
+        // close Protocol drop-down when they click elsewhere on page (handling manually so accordion click won't inadvertently close drop-down)
+        $(':root').on('click', function (e) {
+            if ($('#navbarTwoProtocol').is(e.target) == false
+                && $('#protocolsDropDown').has(e.target).length === 0) {
+                $('#protocolsDropDown').removeClass('show');
+            }
+        });
+
+        // TODO CS2: remove this after testing complete
+        $(document).ready(function () {
+            console.log("path test:", "@Model.PathTest");
+        });
+    </script>
+}

@@ -1,0 +1,57 @@
+﻿@{
+    ViewData["Title"] = "SSPx";
+}
+
+@model IEnumerable<sspx.core.entities.Protocol>
+@{
+    //Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Protocols</title>
+    <style>
+        .details {
+            margin: 20px auto;
+            width: 35%;
+        }
+
+            .details .menu {
+                width: 400px;
+                padding: 10px;
+                border: 1px solid #ccc;
+                cursor: pointer;
+                margin-bottom: 10px;
+                text-align: center;
+                margin-right: 10px;
+                font-weight: bold;
+                font-size: 14px;
+                display: block;
+                color: #6495ED;
+            }
+
+            .details a {
+                text-decoration: none;
+            }
+
+            .details .menu:hover {
+                background-color: #ccc;
+                color: #ffffff;
+            }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <div class="details">
+        @{
+            //foreach (var protocol in Model)
+            //{
+            //    <a href="/@protocol.ProtocolId">
+            //        <div class="menu">@protocol.ProtocolName</div>
+            //    </a>
+            //}
+        }
+    </div>
+</body>
+</html>

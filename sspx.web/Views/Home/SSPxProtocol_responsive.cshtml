@@ -1,0 +1,1099 @@
+﻿@model sspx.web.Models.ChecklistNoteViewModel
+@{
+    // TODO CS2: remove _responsive after responsive design experimenting is complete
+    Layout = "~/Views/Shared/_ProtocolLayout_responsive.cshtml";
+    var pid = Model.protocolCkey + "_C";
+    var authorAssign = new sspx.web.Models.UserAssignmentModel { role = "Author", title = "Primary Author" };
+    var reviewerAssign = new sspx.web.Models.UserAssignmentModel { role = "Reviewer", title = "Reviewer" };
+    var panelreviewerAssign = new sspx.web.Models.UserAssignmentModel { role = "PanelReviewer", title = "Panel Reviewer" };
+}
+@section topScripts {
+    <style>
+        #protocolNodes .k-state-selected {
+            background-color: #A3C2A3;
+        }
+    </style>
+}
+@section topSection {
+    <div id="DeleteItemConfirmation" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete checklist item</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this item and all of its children?</p>
+                </div>
+                <div class="modal-footer">
+                    <button id="DeleteItem" type="button" class="btn btn-primary" onclick="deleteItem();">Delete</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="topmenu">Workflow</div>
+    <div class="topmenu active">Content</div>
+    <div class="topmenu"><a href="../sspxprotocolnote/@Model.protocolCkey">Notes & References</a></div>
+    <div class="topmenu"><a href="#" onclick="goToPreview('full'); return false;">Full Preview</a></div>
+    <div class="topmenu alert alert-success" id="alertMessage" style="display:none; margin-left: 50px; padding: 3px 10px;"></div>
+    <div class="topmenuright" onclick="saveContent();">SAVE ALL</div>
+}
+
+@section leftSection {
+    <div class="itemActionMenu" style="display:none">
+        <div class="mainMenu">
+            <a class="dropdown-item extend" href="#" data-id="0"><i class="fas fa-plus"></i>  ADD ITEM <span><i class="fas fa-angle-right"></i></span></a>
+            <a class="dropdown-item extend" href="#" data-id="1"><i class="fas fa-code-branch"></i>  ADD SUB ITEM <span><i class="fas fa-angle-right"></i></span></a>
+            <a class="dropdown-item" href="#" onclick="return moveItem(0)"><i class="fas fa-arrow-circle-up"></i>  MOVE UP</a>
+            <a class="dropdown-item" href="#" onclick="return moveItem(1)"><i class="fas fa-arrow-circle-down"></i>  MOVE DOWN</a>
+            <a class="dropdown-item" href="#"><i class="fas fa-pencil-alt"></i>  RENAME</a>
+            <a class="dropdown-item" href="#" onclick="return copyNode(true)"><i class="fas fa-cut"></i>  CUT</a>
+            <a class="dropdown-item" href="#" onclick="return deleteItemConf()"><i class="fas fa-trash-alt"></i>  DELETE</a>
+            <a id="CopyNodeMenu" class="dropdown-item" href="#" onclick="return copyNode(false)"><i class="fas fa-copy"></i>  DUPLICATE</a>
+            <a id="PasteNodeMenu" class="dropdown-item" href="#" onclick="return pasteNode()" style="display:none"><i class="fas fa-paste"></i>  PASTE AFTER</a>
+        </div>
+        <div class="subMenu" style="display:none">
+            <div class="menuLabel">Item Type</div>
+            <div class="nodeType" style="margin-left: 5px" data-id="24"><span class="nodeTypeIcon"></span></div>
+            <div class="nodeType active" data-id="12"><span class="nodeTypeIcon"></span></div>
+            <div class="nodeType" data-id="4"><span class="nodeTypeIcon"></span></div>
+            <div class="nodeType" data-id="23"><span class="nodeTypeIcon"></span></div>
+            <div class="nodeType" data-id="17"><span class="nodeTypeIcon"></span></div>
+            <div class="nodeType" data-id="6"><span class="nodeTypeIcon"></span></div>
+            <div class="nodeType" data-id="20"><span class="nodeTypeIcon"></span></div>
+            <div class="menuLabel">Number of copies to be added</div>
+            <div style="float:left;"><input id="numCount" type="number" title="copy count" value="1" min="1" max="100" step="1" style="width: 150px" /></div>
+            <button type="button" class="btn btn-success" style="float:right" onclick="insertItem()">Confirm</button>
+        </div>
+    </div>
+    <div class="sectionHeader">Table of Content</div>
+    <div class="subHeader"><input type="checkbox" onclick="showCheckBoxes($(this));" /> Show/No Show</div>
+    <div id="protocolNodes"></div>
+}
+
+@section midSection {
+    <div class="panelmenu active" dataId="EditContent">Edit Content</div>
+    <div id="advancedOption" class="panelmenu" dataId="AdvancedOption" style="display:none">Publish Options</div>
+    <div class="panelSection" style="background-color: #A3C2A3;">
+        <div id="EditContent" class="panel" style="display:block">
+            <div class="contentArea" style="min-height: 596px;">
+                <div class="subHeader"><span id="text" style="width:95%; display: inline-block"></span><span style="float:right"><i class="fas fa-caret-left" style="cursor:pointer;font-size:20px" onclick="goToItem(-1);"></i>&nbsp;&nbsp;<i class="fas fa-caret-right" style="cursor:pointer;font-size:20px" onclick="goToItem(1);"></i></span></div>
+                <div id="titleContent" class="contentPanel">
+                    <div class="textLabel">Protocol Name</div>
+                    <input id="protocolName" type="text" style="width: 100%; padding: 3px" />
+                    <div style="width:33%; padding-right: 5px; float: left">
+                        <div class="textLabel">Protocol Group</div>
+                        <div id="protocolGroup"></div>
+                    </div>
+                    <div style="width:33%; padding-right: 5px; float: left">
+                        <div class="textLabel">Protocol Version</div>
+                        <div id="protocolVersion"></div>
+                    </div>
+                    <div style="width:33%; padding-right: 5px; float: left">
+                        <div class="textLabel">Protocol Posting Date</div>
+                        <div id="webPostingDate"></div>
+                    </div>
+                    <div class="textLabel" style="clear:both">Description</div>
+                    <textarea id="description" style="width: 100%; height: 100px; padding: 3px;"></textarea>
+                    <div id="noteTitle" class="textLabel">Standard Used</div>
+                    <div class="checkboxGroup">
+                        @{
+                            @foreach (var stand in Model.standards)
+                            {
+                            <input type="radio" name="standard" data-id="@stand.Key" value="@stand.Key"> @stand.Value<br />
+                            }
+                        }
+                    </div>
+                </div>
+                <div id="coverContent" class="contentPanel">
+                    <textarea id="coverEditor" style="height:530px; width:100%; clear:both" spellcheck="false"></textarea>
+                </div>
+                <div id="authorContent" class="contentPanel">
+                    <div style="width:49%; float:left">@Html.Partial("_UserAssignment", authorAssign)</div>
+                    <div style="width:49%; float:right">
+                        @Html.Partial("_UserAssignment", reviewerAssign)
+                        @Html.Partial("_UserAssignment", panelreviewerAssign)
+                    </div>
+                </div>
+                <div id="itemContent" class="contentPanel">
+                    <div class="nodeType" data-id="24"><span class="nodeTypeIcon"></span>Section Header</div>
+                    <div class="nodeType" data-id="12"><span class="nodeTypeIcon"></span>Notes</div>
+                    <div class="nodeType" data-id="4"><span class="nodeTypeIcon"></span>Question Single Select</div>
+                    <div class="nodeType" data-id="23"><span class="nodeTypeIcon"></span>Question Multi Select</div>
+                    <div class="nodeType" data-id="17"><span class="nodeTypeIcon"></span>Question Fillin</div>
+                    <div class="nodeType" data-id="6"><span class="nodeTypeIcon"></span>Answer</div>
+                    <div class="nodeType" data-id="20"><span class="nodeTypeIcon"></span>Answer Fillin</div>
+                    <div class="nodeInfo">
+                        <div class="textLabel">Visible Text</div>
+                        <textarea id="visibleText" row="3" style="width: 100%; padding: 3px;"></textarea>
+                        <div class="textLabel">Required</div>
+                        <input id="requiredCore" type="radio" name="required" value="core"> Core &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <input id="requiredConditional" type="radio" name="required" value="conditional"> Conditional &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <input id="requiredOptional" type="radio" name="required" value="optional"> Optional<br/>
+                        <input type="text" id="condition" style="display:none; width:100%; padding: 2px 5px;" value="required only if applicable"/>
+                        <div id="noteTitle" class="textLabel">Note Reference</div>
+                        <div class="checkboxGroup">
+                            @{
+                                @foreach (var note in Model.notes)
+                                {
+                                    var noteText = note.number + " - " + note.title;
+                                <input type="checkbox" id="@note.number" data-id="@note.key" /> @noteText<br />
+                                }
+                            }
+                        </div>
+                        <div class="textLabel">Comments</div>
+                        <textarea id="comments" class="comment"></textarea>
+                        <input type="hidden" id="nodeCkey" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="AdvancedOption" class="panel" style="display: none;">
+            <div class="contentArea" style="min-height: 596px;">
+                <div class="subHeader"><span id="text"></span></div>
+                <div id="itemContent" class="contentPanel">
+                    <div class="textLabel">Advanced Metadata</div>
+                    <div id="metadataContainer" class="container-fluid">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="textLabel">Report Text</div>
+                                <input id="reportText" type="text" style="width:100%" />
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="textLabel">Data Type</div>
+                                <select id="dataType" style="width:100%;height:27px;">
+                                    @{
+                                        var len = (Model.dataTypes.Length / 2) - 1;
+                                        @for (var i = 0; i < len; i++)
+                                        {
+                                        <option value="@Model.dataTypes[i,0]">@Model.dataTypes[i, 1]</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="textLabel">Unit</div>
+                                <select id="dataUnit" style="width:100%;height:27px;">
+                                    @{
+                                        len = (Model.dataUnits.Length / 2) - 1;
+                                        @for (var i = 0; i < len; i++)
+                                        {
+                                        <option value="@Model.dataUnits[i,0]">@Model.dataUnits[i, 1]</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <div class="textLabel">Max. Card</div>
+                                <input id="maxChar" type="text" style="width:100%" class="numeric" />
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="textLabel">Min. Card</div>
+                                <input id="minChar" type="text" style="width:100%" class="numeric" />
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="textLabel">Max. Character</div>
+                                <input id="maxValue" type="text" style="width:100%" class="numeric" />
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="textLabel">Min. Character</div>
+                                <input id="minValue" type="text" style="width:100%" class="numeric" />
+                            </div>
+                        </div>
+                    </div>
+                    <div style="padding-top:20px">Publish Options</div>
+                    <input id="publishECC" type="radio" name="publish" value="ecc"> eCC Only &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input id="publishPrint" type="radio" name="publish" value="print"> Print Only &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input id="publichBoth" type="radio" name="publish" value="both"> eCC &amp; Print
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section rightSection {
+    <div class="panelmenu" dataId="Preview">Preview</div>
+    <div id="commentMenu" class="panelmenu active" dataId="Comment">Comments <span class="badge">@Model.comments.Count</span></div>
+    <div class="panelSection">
+        <div id="Preview" class="panel">
+            <div id="DynamicPreview" style="clear:both"></div>
+            <iframe id="FullPreview" style="width:100%; height:100%; border: 0"></iframe>
+        </div>
+        @Html.Partial("_Comments", Model)
+    </div>
+}
+
+@section bottomContent {
+    <style>
+        #protocolNodes .k-item .k-in {
+            width: 93%;
+            white-space: normal;
+            padding: 2px !important;
+        }
+            #protocolNodes .k-item .k-in .nodeLabel {
+                display: inline-block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                vertical-align: middle;
+            }
+    </style>
+    <script id="node-template" type="text/kendo-ui-template">
+        <span class='#= getIconClass(true, item.itemType) #'></span>
+        # if (item.titleHtml.length > 35) { #
+        <span class='nodeLabel' style="width: 85%" title="#= item.titleHtml #">#= item.titleHtml #</span>
+        # } else { #
+        <span class='nodeLabel' title="#= item.titleHtml #">#= item.titleHtml #</span>
+        # } #
+        # if (item.noteNumber && item.noteNumber.length > 0) { # :
+        # for (var i = 0; i < item.noteNumber.length; i++) { #
+        <a href="javascript:goToNote('#= item.noteNumber[i] #')">#= item.noteNumber[i] #</a>
+        # } #
+        # } #
+        # if (item.commentCount > 0) { #
+        <span class='badge'>#= item.commentCount #</span>
+        # } #
+        # if (item.parentId != "") { #
+        <span class='itemMenu' data-id='#= item.id #'><i class="fas fa-chevron-right"></i></span>
+        # } #
+    </script>
+    <script type="text/javascript">
+        var allUsers = @Html.Raw(Json.Serialize(Model.allUsers));
+        var allNotes = @Html.Raw(Json.Serialize(Model.notes));
+        var currentProtocol = '@Model.protocolCkey';
+        var protocolVersionKey = '';
+        var selectedElement = null;
+        var currentNode = '';
+        var nodeToCopy = '';
+        var insertType = 0;
+        var itemType = 0;
+        var saveContentActive = false;
+        var checkSpell = true;
+        var saveNodeHidden = false;
+        var saveSuccess = false;
+        var isCut = false;
+
+        var protocol = new kendo.data.HierarchicalDataSource({
+            transport: {
+                read: {
+                    url: "../SSPxItem/@pid/children?view=protocol",
+                    dataType: "json"
+                }
+            },
+            schema: {
+                model: {
+                    id: "id",
+                    hasChildren: "hasItems"
+                }
+            }
+        });
+
+        function toggleCondition() {
+            var required = $('.contentArea .contentPanel input[name=required]:checked').val();
+            if (required === 'conditional') {
+                var jCondition = $('.contentArea .contentPanel #condition');
+                if (jCondition.val() == '') {
+                    jCondition.val('required only if applicable');
+                }
+                $('.contentArea .contentPanel #condition').show();
+            } else {
+                $('.contentArea .contentPanel #condition').hide();
+            }
+        }
+
+        function goToNote(noteNo) {
+            var url = '../SSPxProtocolNote/' + currentProtocol + '?noteNo=' + noteNo;
+            window.open(url, "noteview");
+            return false;
+        }
+
+        function goToPreview(viewType) {
+            var url = '../SSPxProtocolPreview/' + currentProtocol + '_P?view=' + viewType;
+            $('#col3 .panelSection #Preview #FullPreview').attr('src', url).show();
+			$('#col3 .panelSection #Preview #DynamicPreview').hide();
+            $('#col3 .panelSection #Preview').css('overflow', 'hidden').css('padding', '0px');
+            panelMenu($('#col3 .panelmenu[dataId="Preview"]'));
+        }
+
+        function convertToPreviewHtml(nodeData, parentRequired, level) {
+            if (nodeData.hidden) {
+                return '';
+            }
+            var itemType = nodeData.itemType;
+            var iClass = 'itemType' + itemType;
+            var prefix = '';
+            var suffix = '';
+            if (itemType == 6 || itemType == 20) {
+                prefix = '___ ';
+            }
+            if (!nodeData.required && (itemType == 4 || itemType == 17 || itemType == 23)) {
+                prefix = '+ ' + prefix;
+            }
+            if (!parentRequired && (itemType == 6 || itemType == 20)) {
+                prefix = '+ ' + prefix;
+            }
+            if (itemType == 17 || itemType == 20) {
+                suffix = ": _________________";
+            }
+            var text = nodeData.titleHtml;
+            var lowerText = text.toLowerCase();
+            if (lowerText.indexOf("additional dimensions (repeat section if more than one part)") > -1) {
+                return String.Empty;
+            }
+            if (lowerText === "not specified"
+                || lowerText === "cannot be determined"
+                || lowerText.indexOf("not identified") > -1
+                || lowerText.indexOf("not applicable") > -1
+                || lowerText.indexOf("indeterminate") > -1) {
+                suffix = String.Empty;
+            }
+            if (text.substring(0, 1) == "?") {
+                text = text.substring(1);
+            }
+            if (lowerText.indexOf("additional dimension") > -1) {
+                suffix = ": ____ x ____";
+            }
+            var condition = '';
+            if (nodeData.condition && nodeData.condition != '') {
+                condition = "<br/><i>(" + nodeData.condition + ")</i> ";
+            }
+            var html = '<div class="' + iClass + '">' + prefix + text + condition + suffix + '</div>';
+            if (nodeData.items && nodeData.items.length > 0) {
+                for (var i = 0; i < nodeData.items.length; i++) {
+                    html += convertToPreviewHtml(nodeData.items[i], nodeData.required, level + 1);
+                }
+            }
+            return html;
+        }
+
+        function refreshPreviewVersion(versionData) {
+            var previewHtml = '<div class="title" id="1F">' + versionData.title + '</div>';
+            previewHtml += '<div class="cover" id="2F">' + versionData.cover + '</div>';
+            previewHtml += '<div class="section" id="3F">Authors</div>';
+            var name = ''; var user = null;
+            for (var i = 0; i < versionData.users.length; i++) {
+                user = versionData.users[i];
+                name += user.firstName + ' ' + user.middleName + '. ' + user.lastName + ', ';
+                name += user.qualification + ((user.role.toLowerCase() === "author") ? "*; " : '; ');
+            }
+            previewHtml += name + '<p></p>';
+            $('#col3 .panelSection #Preview #DynamicPreview').html(previewHtml).show();
+            $('#col3 .panelSection #Preview #FullPreview').hide();
+            $('#col3 .panelSection #Preview').css('overflow', 'auto').css('padding', '8px');
+            panelMenu($('#col3 .panelmenu[dataId="Preview"]'));
+        }
+
+        function refreshPreview(nodeKey, nodeText, required, itemType, noteNumber, condition) {
+            var treeNodes = $("#protocolNodes").data("kendoTreeView");
+            var data = treeNodes.dataSource.get(nodeKey);
+            if (nodeText) {
+                data.titleHtml = nodeText;
+                data.required = required;
+                data.itemType = itemType;
+                data.condition = condition;
+            }
+            if (noteNumber) {
+                data.noteNumber = noteNumber.split(',');
+            }
+            var selector = '.k-item[data-uid="' + data.uid + '"]';
+            treeNodes.text(selector, nodeText);
+            var previewHtml = convertToPreviewHtml(data, true, 1);
+            if (data.noteNumber.length > 0) {
+                var noteHtml = '<div style="margin-top: 20px; font-weight: 600; border-bottom: 1px solid #000">Notes</div>';
+                for (var i = 0; i < data.noteNumber.length; i++) {
+                    var noteIndex = findindex(allNotes, 'number', data.noteNumber[i]);
+                    if (noteIndex > -1) {
+                        noteHtml += '<div style="margin: 10px 0px">' + allNotes[noteIndex].number + '. ' + allNotes[noteIndex].title + '</div>';
+                        noteHtml += allNotes[noteIndex].details
+                    }
+                }
+                previewHtml += noteHtml;
+            }
+            $('#col3 .panelSection #Preview #DynamicPreview').html(previewHtml).show();
+            $('#col3 .panelSection #Preview #FullPreview').hide();
+            $('#col3 .panelSection #Preview').css('overflow', 'auto').css('padding', '8px');
+            panelMenu($('#col3 .panelmenu[dataId="Preview"]'));
+        }
+
+        function saveAlert() {
+            if (!saveSuccess) {
+                saveSuccess = true;
+                $('#alertMessage').html('Item saved successfully!').fadeIn().delay(3000).fadeOut('slow');
+            }
+            setSaveInActive();
+        }
+
+        function saveContent() {
+            if (saveContentActive) {
+                saveSuccess = false;
+                if (currentNode === "1_F") {
+                    var name = $('.contentArea #protocolName').val();
+                    var description = $('.contentArea #description').val();
+                    var basedOnKey = $(".contentArea input[name=standard]:checked").val();
+                    var url = "../SSPxItem/" + protocolVersionKey + "/saveVersion";
+                    $.ajax({
+                        type: "POST",
+                        url: url,
+                        cache: false,
+                        data: { name: name, description: description, basedOnKey: basedOnKey },
+                        dataType: "json",
+                        success: function (result) {
+                            saveAlert();
+                            goToPreview("header");
+                        },
+                        error: function (xhr, status, err) {
+                            console.error(url, status, err.toString());
+                        }
+                    });
+                } else if (currentNode === "2_F") {
+                    var detail = $("#coverEditor").data("kendoEditor").value();
+                    detail = detail.replace(/"/g, "'");
+                    var url = "../SSPxItem/" + protocolVersionKey + "/saveCover";
+                    $.ajax({
+                        type: "POST",
+                        url: url,
+                        cache: false,
+                        data: { detail: detail },
+                        dataType: "json",
+                        success: function (result) {
+                            saveAlert();
+                            goToPreview("header");
+                        },
+                        error: function (xhr, status, err) {
+                            console.error(url, status, err.toString());
+                        }
+                    });
+                } else if (currentNode === "3_F") {
+                    var primary = "";
+                    var reviewer = "";
+                    var panel = "";
+                    for (var i = 0; i < allUsers.length; i++) {
+                        if (allUsers[i].role == "Author") { primary += allUsers[i].userId + "," }
+                        if (allUsers[i].role == "Reviewer") { reviewer += allUsers[i].userId + "," }
+                        if (allUsers[i].role == "PanelReviewer") { panel += allUsers[i].userId + "," }
+                    }
+                    var url = "../SSPxItem/" + protocolVersionKey + "/saveAuthors";
+                    var users = [];
+                    users.push({ role: "Author", userIds: primary });
+                    users.push({ role: "Reviewer", userIds: reviewer });
+                    users.push({ role: "PanelReviewer", userIds: panel });
+                    for (var i = 0; i < users.length; i++) {
+                        $.ajax({
+                            type: "POST",
+                            url: url,
+                            cache: false,
+                            data: users[i],
+                            dataType: "json",
+                            success: function (result) {
+                                if (result.indexOf("Author") > -1) {
+                                    saveAlert();
+                                    goToPreview("header");
+                                }
+                            },
+                            error: function (xhr, status, err) {
+                                console.error(url, status, err.toString());
+                            }
+                        });
+                    }
+                } else {
+                    var nodeCkey = $('.contentArea .nodeInfo #nodeCkey').val();
+                    if (nodeCkey !== '') {
+                        var url = "../SSPxItem/" + nodeCkey;
+                        var item = {};
+                        item.longText = $('.contentArea .nodeInfo #visibleText').val();
+                        item.key = nodeCkey;
+                        item.required = $('.contentArea .nodeInfo #requiredCore').is(':checked');
+                        if ($('.contentArea .nodeInfo #requiredConditional').is(':checked')) {
+                            item.condition = $('.contentArea .nodeInfo #condition').val();
+                            if (item.condition == "") {
+                                item.condition = "required only if applicable";
+                            }
+                            item.required = true;
+                        }
+                        item.comments = $('.contentArea .nodeInfo #comments').val();
+                        item.itemType = $('.contentArea .nodeType.active').attr('data-id');
+                        // advanced metadata
+                        item.reportText = $('.contentArea .contentPanel #reportText').val();
+                        item.answerDataTypeKey = $('.contentArea .contentPanel #dataType').val();
+                        item.answerUnits = $('.contentArea .contentPanel #dataUnit').val();
+                        var testValue = $('.contentArea .contentPanel #maxValue').val();
+                        item.answerMaxValue = (testValue != '') ? testValue : '-1';
+                        testValue = $('.contentArea .contentPanel #minValue').val();
+                        item.answerMinValue = (testValue != '') ? testValue : '-1';
+                        testValue = $('.contentArea .contentPanel #maxChar').val();
+                        item.answerMaxReps = (testValue != '') ? testValue : '-1';
+                        testValue = $('.contentArea .contentPanel #minChar').val();
+                        item.answerMinReps = (testValue != '') ? testValue : '-1';
+                        if (item.condition != "") {
+                            item.answerMinReps = 0;
+                        }
+                        var selectedNotes = $('.contentArea .nodeInfo .checkboxGroup input[type=checkbox]:checked');
+                        var noteKey = '';
+                        var noteNumber = '';
+                        for (var i = 0; i < selectedNotes.length; i++) {
+                            var jNote = $(selectedNotes[i]);
+                            noteKey += jNote.attr('data-id') + ',';
+                            noteNumber += ',' + jNote.attr('id');
+                        }
+                        if (noteNumber.length > 0) {
+                            noteNumber = noteNumber.substr(1);
+                        }
+                        item.noteKeys = noteKey;
+                        $.ajax({
+                            type: "POST",
+                            contentType: "application/json; charset=utf-8",
+                            url: url,
+                            cache: false,
+                            data: JSON.stringify(item),
+                            dataType: "json",
+                            success: function (result) {
+                                saveAlert();
+                                $('.contentArea .subHeader #text').html(item.longText);
+                                refreshPreview(nodeCkey + '_I', item.longText, item.required, item.itemType, noteNumber, item.condition);
+                            },
+                            error: function (xhr, status, err) {
+                                console.error(url, status, err.toString());
+                            }
+                        });
+                    }
+                }
+                if (saveNodeHidden) {
+                    var nodeDiff = getNodeHiddenDiff();
+                    var ids = {};
+                    ids.hideIds = nodeDiff.changeToHide.join(',');
+                    ids.showIds = nodeDiff.changeToShow.join(',');
+                    var url = "../SSPxItem/" + protocolVersionKey + "/saveHiddenFlag";
+                    $.ajax({
+                        type: "POST",
+                        url: url,
+                        cache: false,
+                        data: ids,
+                        dataType: "json",
+                        success: function (result) {
+                            saveAlert();
+                        },
+                        error: function (xhr, status, err) {
+                            console.error(url, status, err.toString());
+                        }
+                    });
+                }
+            }
+            return false;
+        }
+
+        function goToItem(dir) {
+            var treeNodes = $("#protocolNodes").data("kendoTreeView");
+            var selectedNode = treeNodes.select();
+            var node = (dir === 1) ? selectedNode.next('li.k-item') : selectedNode.prev('li.k-item');
+            if (node.length > 0) {
+                treeNodes.select(node);
+                var item = treeNodes.dataItem(node);
+                retrieveNode(item);
+            }
+        }
+
+        function getNode(e) {
+            saveContent();
+            var item = this.dataItem(e.node);
+            retrieveNode(item);
+        }
+
+        function retrieveNode(item) {
+            var url = "../SSPxVersion/" + currentProtocol;
+            var sameType = (currentNode.indexOf("_I") > 0 && item.id.indexOf("_I") > 0);
+            if (!sameType) {
+                $('#col2 .contentArea .contentPanel').hide();
+            }
+            $('#advancedOption').hide();
+            $('.contentArea .nodeInfo #condition').val('').hide();
+            panelMenu($('#col2 .panelmenu[dataId="EditContent"]'));
+            if (item.id === '1_F') {
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    cache: false,
+                    dataType: "json",
+                    success: function (version) {
+                        if (version.title) {
+                            $('.contentArea .subHeader #text').html('Title');
+                            $('.contentArea #protocolName').val(version.protocolName);
+                            $('.contentArea #protocolGroup').html(version.groupName);
+                            $('.contentArea #protocolVersion').html(version.version);
+                            $('.contentArea #webPostingDate').html(version.webPostingDateString);
+                            $('.contentArea #description').val(version.title);
+                            $(".contentArea input[name=standard][value='" + version.basedOnKey + "']").prop("checked", true);
+                            $('#col2 .contentArea #titleContent').show();
+                            protocolVersionKey = version.key;
+                            setSaveInActive();
+                            currentNode = item.id;
+                            refreshPreviewVersion(version);
+                        }
+                    },
+                    error: function (xhr, status, err) {
+                        console.error(url, status, err.toString());
+                    }
+                });
+            } else if (item.id === '2_F') {
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    cache: false,
+                    dataType: "json",
+                    success: function (version) {
+                        $('.contentArea .subHeader #text').html('Cover');
+                        $("#coverEditor").data("kendoEditor").value(version.cover);
+                        if (checkSpell) {
+                            var editorIframe = $("iframe.k-content").contents();
+                            editorIframe.find("body").attr('spellcheck', 'false');
+                            checkSpell = false;
+                        }
+                        $('#col2 .contentArea #coverContent').show();
+                        protocolVersionKey = version.key;
+                        setSaveInActive();
+                        currentNode = item.id;
+                        refreshPreviewVersion(version);
+                    },
+                    error: function (xhr, status, err) {
+                        console.error(url, status, err.toString());
+                    }
+                });
+            } else if (item.id === '3_F') {
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    cache: false,
+                    dataType: "json",
+                    success: function (version) {
+                        if (version.users) {
+                            $('.contentArea .subHeader #text').html('Authors');
+                            for (var i = 0; i < allUsers.length; i++) {
+                                var oIndex = findindex(version.users, 'userId', allUsers[i].userId);
+                                allUsers[i].role = (oIndex === -1) ? '' : version.users[oIndex].role;
+                            }
+                            objUA_Author.initUser(allUsers);
+                            objUA_Reviewer.initUser(allUsers);
+                            objUA_PanelReviewer.initUser(allUsers);
+                            $('#col2 .contentArea #authorContent').show();
+                            protocolVersionKey = version.key;
+                            setSaveInActive();
+                            currentNode = item.id;
+                            refreshPreviewVersion(version);
+                        }
+                    },
+                    error: function (xhr, status, err) {
+                        console.error(url, status, err.toString());
+                    }
+                });
+            } else if (item.id.indexOf("_I") > 1) {
+                url = "../SSPxItem/" + item.id;
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    cache: false,
+                    dataType: "json",
+                    success: function (item) {
+                        if (item.text) {
+                            if (item.itemType == 26) { item.itemType = 12; }
+                            $('.contentArea .nodeInfo #nodeCkey').val(item.key);
+                            $('.contentArea .subHeader #text').html(item.text);
+                            $('.contentArea .nodeType').removeClass('active');
+                            $('.contentArea .nodeType[data-id="' + item.itemType + '"]').addClass('active');
+                            $('.contentArea .nodeInfo #visibleText').val(item.longText);
+                            $('.contentArea .nodeInfo #comments').val(item.comments);
+                            $('.contentArea .nodeInfo input[type=radio]').prop('checked', false);
+                            if (item.condition != "") {
+                                $('.contentArea .nodeInfo #requiredConditional').prop('checked', true);
+                                $('.contentArea .nodeInfo #condition').val(item.condition).show();
+                            } else if (item.required) {
+                                $('.contentArea .nodeInfo #requiredCore').prop('checked', true);
+                            } else {
+                                $('.contentArea .nodeInfo #requiredOptional').prop('checked', true);
+                            }
+                            $('.contentArea .nodeInfo .checkboxGroup input[type=checkbox]').prop('checked', false);
+                            for (var i = 0; i < item.notes.length; i++) {
+                                var number = item.notes[i].number;
+                                $('.contentArea .nodeInfo .checkboxGroup #' + number).prop('checked', true);
+                            }
+                            $('.contentArea .contentPanel #reportText').val(item.reportText);
+                            $('.contentArea .contentPanel #dataType').val(item.answerDataTypeKey ? item.answerDataTypeKey : 0);
+                            $('.contentArea .contentPanel #dataUnit').val(item.answerUnits ? item.answerUnits : 0);
+                            $('.contentArea .contentPanel #maxValue').val(item.answerMaxValue);
+                            $('.contentArea .contentPanel #minValue').val(item.answerMinValue);
+                            $('.contentArea .contentPanel #maxChar').val(item.answerMaxReps);
+                            $('.contentArea .contentPanel #minChar').val(item.answerMinReps);
+
+                            setSaveInActive();
+                            currentNode = item.key + '_I';
+                            $('#col2 .contentArea #itemContent').show();
+                            commentObject.setCurrentNode(currentNode);
+                            refreshPreview(currentNode, null, null, null, null, null);
+                            $('#Comment .addMeta').show();
+                            $('#advancedOption').show();
+                        }
+                    },
+                    error: function (xhr, status, err) {
+                        console.error(url, status, err.toString());
+                    }
+                });
+            } else {
+                $('.contentArea .subHeader #text').html('');
+                setSaveInActive();
+                currentNode = item.id;
+            }
+        }
+
+        function onNodeCheck() {
+            saveNodeHidden = true;
+            setSaveActive();
+        }
+
+        function diffNodeId(nodes, changeToHide, changeToShow) {
+            for (var i = 0; i < nodes.length; i++) {
+                if (nodes[i].checked && nodes[i].hidden && nodes[i].id.indexOf('_I') > 0) {
+                    changeToShow.push(nodes[i].id);
+                    nodes[i].hidden = false;
+                } else if (!nodes[i].checked && !nodes[i].hidden && nodes[i].id.indexOf('_I') > 0) {
+                    changeToHide.push(nodes[i].id);
+                    nodes[i].hidden = true;
+                }
+                if (nodes[i].hasChildren) {
+                    diffNodeId(nodes[i].children.view(), changeToHide, changeToShow);
+                }
+            }
+        }
+
+        function getNodeHiddenDiff() {
+            var nodeDiff = { changeToHide: [], changeToShow: [] };
+            var allNodes = $("#protocolNodes").data("kendoTreeView").dataSource.view();
+            diffNodeId(allNodes, nodeDiff.changeToHide, nodeDiff.changeToShow);
+            return nodeDiff;
+        }
+
+        function showCheckBoxes(checkbox) {
+            var treeNodes = $("#protocolNodes").data("kendoTreeView");
+            treeNodes.destroy();
+            $('#protocolNodes').find('ul:first').remove();
+            $('#protocolNodes').removeAttr('data-role').removeAttr('class').removeAttr('tabindex');
+            if (checkbox.is(':checked')) {
+                $("#protocolNodes").kendoTreeView({
+                    checkboxes: true,
+                    template: kendo.template($("#node-template").html()),
+                    dataSource: protocol,
+                    check: onNodeCheck,
+                    select: getNode
+                });
+            } else {
+                $("#protocolNodes").kendoTreeView({
+                    checkboxes: false,
+                    template: kendo.template($("#node-template").html()),
+                    dataSource: protocol,
+                    select: getNode
+                });
+            }
+            return false;
+        }
+
+        function deleteItemConf() {
+            $('#DeleteItemConfirmation').modal('show');
+        }
+
+        function deleteItem() {
+            var treeNodes = $("#protocolNodes").data("kendoTreeView");
+            var data = treeNodes.dataSource.get(currentNode);
+            var refreshNodeId = data.parentId;
+            var url = "../SSPxItem/" + currentNode + "/delete";
+            $.ajax({
+                type: "GET",
+                url: url,
+                cache: false,
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+                    refreshNode(refreshNodeId, false);
+                    $('.itemActionMenu').hide();
+                    $('#alertMessage').html('Item deleted successfully!').fadeIn().delay(3000).fadeOut('slow');
+                },
+                error: function (xhr, status, err) {
+                    console.error(url, status, err.toString());
+                }
+            });
+            $('#DeleteItemConfirmation').modal('hide');
+            return false;
+        }
+
+        function findindex(objectArray, keyName, keyValue) {
+            for (var i = 0; i < objectArray.length; i++) {
+                if (objectArray[i][keyName] == keyValue) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        function moveItem(dir) {
+            var treeNodes = $("#protocolNodes").data("kendoTreeView");
+            var data = treeNodes.dataSource.get(currentNode);
+            var refreshNodeId = data.parentId;
+            var children = treeNodes.dataSource.get(data.parentId).items;
+            var index = findindex(children, 'id', currentNode);
+            if (index < 0 || (dir === 0 && index === 0) || (dir === 1 && index === (children.length - 1))) {
+                return false;
+            }
+            var withNodeId = (dir === 0) ? children[index - 1].id : children[index + 1].id;
+            var url = "../SSPxItem/" + currentNode + "/switch?withNodeId=" + withNodeId;
+            $.ajax({
+                type: "GET",
+                url: url,
+                cache: false,
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+                    refreshNode(refreshNodeId, false);
+                    $('.itemActionMenu').hide();
+                    $('#alertMessage').html('Item moved successfully!').fadeIn().delay(3000).fadeOut('slow');
+                },
+                error: function (xhr, status, err) {
+                    console.error(url, status, err.toString());
+                }
+            });
+            return false;
+        }
+
+        function insertItem() {
+            var treeNodes = $("#protocolNodes").data("kendoTreeView");
+            var data = treeNodes.dataSource.get(currentNode);
+            var refreshNodeId = (insertType == 0) ? data.parentId : currentNode;
+            var itemCount = $("#numCount").data("kendoNumericTextBox").value();
+            var type = $('.itemActionMenu .subMenu .nodeType.active').attr('data-id');
+            var url = "../SSPxItem/" + currentNode + "/insert?insertType=" + insertType + "&itemTypeKey=" + type + "&itemCount=" + itemCount;
+            $.ajax({
+                type: "GET",
+                url: url,
+                cache: false,
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+                    refreshNode(refreshNodeId, true);
+                    $('.itemActionMenu').hide();
+                },
+                error: function (xhr, status, err) {
+                    console.error(url, status, err.toString());
+                }
+            });
+            return false;
+        }
+
+        function copyNode(cut) {
+            nodeToCopy = currentNode;
+            isCut = cut;
+            $('#PasteNodeMenu').show();
+            console.log('copy node is ' + nodeToCopy);
+            return false;
+        }
+
+        function pasteNode() {
+            var pNode = currentNode;
+            var treeNodes = $("#protocolNodes").data("kendoTreeView");
+            var data = treeNodes.dataSource.get(pNode);
+            var parentId = data.parentId;
+            console.log('will copy item ' + nodeToCopy + ' and its children to below item ' + pNode + ' with parentId ' + parentId);
+            var url = "../SSPxItem/" + nodeToCopy + "/copyToAfter/" + pNode + "?isCut=" + isCut;
+            $.ajax({
+                type: "GET",
+                url: url,
+                cache: false,
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+                    refreshNode(parentId, false);
+                    if (isCut) {
+                        data = treeNodes.dataSource.get(nodeToCopy);
+                        parentId = data.parentId;
+                        refreshNode(parentId, false);
+                    }
+                    $('#PasteNodeMenu').hide();
+                    $('.itemActionMenu').hide();
+                },
+                error: function (xhr, status, err) {
+                    console.error(url, status, err.toString());
+                }
+            });
+            return false;
+        }
+
+        function refreshNode(nodeId, setChildrenFlag) {
+            var treeNodes = $("#protocolNodes").data("kendoTreeView");
+            var node = treeNodes.findByUid(treeNodes.dataSource.get(nodeId).uid);
+            var reloadDataItem = treeNodes.dataItem(node);
+            if (setChildrenFlag) {
+                reloadDataItem.hasChildren = true;
+            }
+            reloadDataItem.loaded(false);
+            reloadDataItem.load();
+            treeNodes.expand(node);
+        }
+
+        function panelMenu(panel) {
+            panel.siblings('div.panelSection').find('.panel').hide();
+            panel.siblings('div.panelmenu').removeClass('active');
+            panel.addClass('active');
+            var activePanel = panel.attr('dataId');
+            $('#' + activePanel).css('display', 'block');
+        }
+
+        function displayMainMenu(itemNode) {
+            selectedElement = itemNode;
+            var top = itemNode.offset().top;
+            var left = itemNode.offset().left;
+            var top2 = top - 100; // not sure why we still have 80 offset to the top??
+            currentNode = itemNode.attr('data-id');
+            console.log(currentNode);
+            $('.itemActionMenu').css('top', top2).css('left', left).show();
+        }
+
+        function displaySubMenu(menuItem) {
+            $('.itemActionMenu .mainMenu .dropdown-item').css('background-color', '');
+            if (menuItem.hasClass('extend')) {
+                insertType = menuItem.attr('data-id');
+                menuItem.css('background-color', '#ffffff');
+                $('.itemActionMenu').css('width', '720px');
+                $('.itemActionMenu .subMenu').show();
+            } else {
+                $('.itemActionMenu').css('width', 'auto');
+                $('.itemActionMenu .subMenu').hide();
+            }
+        }
+
+        function selectNodeType(type) {
+            itemType = type.attr('data-id');
+            type.siblings('.nodeType').removeClass('active');
+            type.addClass('active');
+            setSaveActive();
+        }
+
+        function setSaveInActive() {
+            if (saveContentActive) {
+                saveContentActive = false;
+                $('#topSection .topmenuright').removeClass('active');
+            }
+        }
+
+        function setSaveActive() {
+            if (!saveContentActive) {
+                saveContentActive = true;
+                $('#topSection .topmenuright').addClass('active');
+            }
+        }
+
+        function checkKeyNumeric(inputBox) {
+            var value = inputBox.val();
+            if (!$.isNumeric(value)) {
+                inputBox.val(value.substring(0, value.length - 1));
+            }
+        }
+
+        function setUpButtonIcons() {
+            $(".nodeTypeIcon").each(function () {
+                var itemTypeLookup = $(this).parent().attr("data-id");
+                $(this).addClass(getIconClass(false, itemTypeLookup));
+            });
+        }
+
+        function getIconClass(leftMenu, itemTypeLookup) {
+            if (itemTypeLookup == 24) {
+                return 'fab fa-stripe-s';
+            }
+            else if (itemTypeLookup == 12 || itemTypeLookup == 26) {
+                return leftMenu ? 'fal fa-font' : 'fas fa-font';
+            }
+            else if (itemTypeLookup == 4) {
+                return leftMenu ? 'far fa-dot-circle' : 'fas fa-dot-circle';
+            }
+            else if (itemTypeLookup == 23) {
+                return leftMenu ? 'far fa-check-square' : 'fas fa-check-square';
+            }
+            else if (itemTypeLookup == 17) {
+                return leftMenu ? 'far fa-question-square' : 'fas fa-question-square';
+            }
+            else if (itemTypeLookup == 6) {
+                return leftMenu ? 'far fa-file-alt' : 'fas fa-file-alt';
+            }
+            else if (itemTypeLookup == 20) {
+                return leftMenu ? 'fal fa-edit' : 'fas fa-pen-square';
+            }
+            return '';
+        }
+
+        $(document).ready(function () {
+
+            setUpButtonIcons();
+
+            // https://docs.telerik.com/kendo-ui/api/javascript/ui/treeview
+            $("#protocolNodes").kendoTreeView({
+                template: kendo.template($("#node-template").html()),
+                dataSource: protocol,
+                select: getNode,
+                dataBound: function (e) {
+                    if (protocolVersionKey == '') {
+                        var nodes = $("#protocolNodes").data("kendoTreeView").dataSource.view();
+                        for (var i = 0; i < nodes.length; i++) {
+                            if (nodes[i].id.indexOf('_C') > 0) {
+                                var version = nodes[i].id;
+                                var index = nodes[i].id.indexOf('_C');
+                                protocolVersionKey = version.substring(0, index);
+                                break;
+                            }
+                            if (nodes[i].hasChildren) {
+                                var children = nodes[i].children.view();
+                                for (var j = 0; j < children.length; j++) {
+                                    if (children[j].id.indexOf('_C') > 0) {
+                                        var version = children[j].id;
+                                        var index = children[j].id.indexOf('_C');
+                                        protocolVersionKey = version.substring(0, index);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            $("#coverEditor").kendoEditor({
+                pasteCleanup: {
+                    all: false,
+                    css: false,
+                    keepNewLines: false,
+                    msAllFormatting: false,
+                    msConvertLists: false,
+                    msTags: false,
+                    none: true,
+                    span: false
+                },
+                resizable: {
+                    content: false,
+                    toolbar: false
+                },
+                execute: setSaveActive,
+                keyup: setSaveActive
+            }).getKendoEditor();
+            $("#numCount").kendoNumericTextBox({ format: "#", decimals: 0 });
+            $('.panelmenu').on('click', function () { panelMenu($(this)) });
+            $('#protocolNodes').on('mouseenter', 'span.k-in', function () { $(this).find('.itemMenu').show() });
+            $('#protocolNodes').on('mouseleave', 'span.k-in', function () { $(this).find('.itemMenu').hide() });
+            $('#protocolNodes').on('click', 'span.k-in .itemMenu', function () { displayMainMenu($(this)) });
+            $('body').on('mouseleave', '.itemActionMenu', function () { $(this).hide() });
+            $('.itemActionMenu').on('mouseenter', '.mainMenu .dropdown-item', function () { displaySubMenu($(this)) });
+            $('body').on('click', '.nodeType', function () { selectNodeType($(this)) });
+            $('.contentArea .contentPanel input').on('keyup', function () { setSaveActive(); });
+            $('.contentArea .contentPanel input').on('change', function () { setSaveActive(); });
+            $('.contentArea .contentPanel textarea').on('keyup', function () { setSaveActive(); });
+            $('.contentArea .contentPanel input[type=text].numeric').on('keyup', function () { checkKeyNumeric($(this)); });
+            $('.contentArea .contentPanel input[name=required]').on('click', function () { toggleCondition(); });
+        });
+    </script>
+}

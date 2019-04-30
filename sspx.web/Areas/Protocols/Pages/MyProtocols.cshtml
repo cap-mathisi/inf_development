@@ -1,0 +1,233 @@
+﻿@page
+@model sspx.web.Areas.Protocols.Pages.MyProtocolsModel
+@using sspx.core.entities
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject sspx.web.Services.IProtocolPermissions ProtocolPermissions
+@{
+    ViewData["Title"] = "My Protocols";
+    var baseUrl = $"{this.Request.Scheme}://{this.Request.Host}{this.Request.PathBase}";
+    var word = "word";
+    var pdf = "pdf";
+    var html = "html";
+}
+@section TopScripts{
+    <partial name="_KendoStylesScripts" />
+    @* responsive bootstrap card columns -- https://stackoverflow.com/a/43117538/7803135 *@
+    <style>
+
+        @@media (min-width: 576px) {
+            .card-columns {
+                column-count: 2;
+            }
+        }
+
+        @@media (min-width: 768px) {
+            .card-columns {
+                column-count: 3;
+            }
+        }
+
+        @@media (min-width: 992px) {
+            .card-columns {
+                column-count: 4;
+            }
+        }
+
+        @@media (min-width: 1200px) {
+            .card-columns {
+                column-count: 5;
+            }
+        }
+    </style>
+    @* CS2. keep cards same height. *@
+    <style>
+
+        .text-right {
+            min-height: 23px;
+        }
+    </style>
+}
+<div class="row">
+    <div class="col col-xs-12 col-md-10 col-lg-8 col-xl-6">
+        <div id="myProtocolsFilter" class="card-group text-center text-uppercase">
+            <a id="allFilter" href="#" class="card bg-info text-white">
+                <h3 class="card-title mb-0 mt-2">@Model.ProtocolIndex.AllProtocolsCount</h3>
+                <small class="card-body pt-1">All Protocols</small>
+            </a>
+            <a id="authorFilter" href="#author" class="card text-success">
+                <h3 class="card-title mb-0 mt-2">@Model.ProtocolIndex.PrimaryAuthorCount</h3>
+                <small class="card-body pt-1">Primary Author</small>
+            </a>
+            <a id="reviewerFilter" href="#reviewer" class="card text-danger">
+                <h3 class="card-title mb-0 mt-2">@Model.ProtocolIndex.ReviewerPanelCount</h3>
+                <small class="card-body pt-1">Reviewer Panel</small>
+            </a>
+            @*<a id="authorPanelFilter" href="#authorPanel" class="card text-secondary">
+                <h3 class="card-title mb-0 mt-2">@Model.ProtocolIndex.AuthorPanelCount</h3>
+                <small class="card-body pt-1">Author Panel</small>
+            </a>*@
+        </div>
+    </div>
+</div>
+<div id="myProtocolCards" class="card-columns mt-5">
+    @foreach (var protocol in Model.ProtocolIndex.Items)
+    {
+        var hasEditPermission = ProtocolPermissions.HasPermission(Model.UserKey, protocol.ProtocolKey, sspx.core.entities.ProtocolPermissionTypes.EditProtocol);
+        var hasViewPermission = ProtocolPermissions.HasPermission(Model.UserKey, protocol.ProtocolKey, sspx.core.entities.ProtocolPermissionTypes.View);
+
+        <div class="card" >
+            <input type="hidden" class="currentUserRole" value="@protocol.CurrentUserRole" />
+            <input type="hidden" class="protocolKey" value="@protocol.ProtocolKey" />
+            <div class="card-header text-uppercase text-nowrap py-0 pl-2"></div>
+            <div class="card-body text-center">
+                <p class="text-right">
+                    @foreach (var author in protocol.Authors)
+                    {
+                        <span class="border border-secondary rounded-circle bg-light p-1">
+                            @author.FirstName.Substring(0, 1)@author.LastName.Substring(0, 1)
+                        </span>
+                    }
+                </p>
+                <h6 class="card-title mb-1">@protocol.ProtocolName</h6>
+                <p class="card-text mb-1">@protocol.ProtocolGroupName</p>
+                <p class="card-text"><small class="text-muted">Last edited @protocol.ProtocolVersionLastUpdatedDt.ToString("d")</small></p>
+            </div>
+            <div class="card-footer text-center text-nowrap bg-white py-0">
+                @if (hasEditPermission)
+                {
+                    <a asp-route="SSPxProtocol" asp-route-pid="@protocol.ProtocolKey" class="small">Preview</a>
+                }
+                else if (hasViewPermission)
+                {
+                    <a asp-route="SSPxProtocolReader" asp-route-vid="@protocol.ProtocolKey" class="small">Preview</a>
+                }
+                @if (protocol.CommentsCount > 0)
+                {
+                    @if (hasEditPermission)
+                    {
+                        <a class="small pl-1" asp-route="SSPxProtocol" asp-route-pid="@protocol.ProtocolKey">@protocol.CommentsCount Comments</a>
+                    }
+                    else if (hasViewPermission)
+                    {
+                        <a class="small pl-1" asp-route="SSPxProtocolReader" asp-route-vid="@protocol.ProtocolKey">@protocol.CommentsCount Comments</a>
+                    }
+                }
+                else
+                {
+                    @if (hasEditPermission)
+                    {
+                        <a class="small pl-1" asp-route="SSPxProtocol" asp-route-pid="@protocol.ProtocolKey">@protocol.CommentsCount Comments</a>
+                    }
+                    else if (hasViewPermission)
+                    {
+                        <a class="small pl-1" asp-route="SSPxProtocolReader" asp-route-vid="@protocol.ProtocolKey">@protocol.CommentsCount Comments</a>
+                    }
+                }
+
+                @if (hasViewPermission)
+                {
+                    <a href="@baseUrl/Protocols/OutputHtml/@(protocol.ProtocolKey)_P?view=full/word" class="downloadHTML small pl-1" target="_blank">Word</a>
+                    <a href="@baseUrl/Protocols/OutputHtml/@(protocol.ProtocolKey)_P?view=full/pdf" class="downloadHTML small pl-1" target="_blank">PDF</a>
+                    <a href="@baseUrl/Protocols/OutputHtml/@(protocol.ProtocolKey)_P?view=full" class="downloadHTML small pl-1" target="_blank">HTML</a>
+                }
+            </div>
+        </div>
+
+    }
+</div>
+@section BottomScripts{
+    <script type="text/javascript">
+
+        function setUpCardTitles() {
+            $('#myProtocolCards .currentUserRole').each(function () {
+                var cardTitle = '';
+                var colorClass = '';
+                if (this.value == '@RoleTypes.Author') {
+                    cardTitle = 'Primary Author';
+                    colorClass = 'bg-success';
+                }
+                else if (this.value == '@RoleTypes.Reviewer') {
+                    cardTitle = 'Reviewer';
+                    colorClass = 'bg-warning';
+                }
+                else if (this.value == '@RoleTypes.Editor') {
+                    // TODO CS2: confirm this is correct with CAP per DR in https://trello.com/c/DSQKeIKy
+                    cardTitle = 'Author Panel';
+                    colorClass = 'bg-secondary';
+                }
+
+                $(this).parent().children('.card-header').addClass(colorClass).text(cardTitle);
+            });
+        }
+
+        function myProtocolsFilterHover(card) {
+            var filterIsSelected = $(card).hasClass('bg-info');
+            if (filterIsSelected == false) {
+                $(card).toggleClass('bg-light');
+            }
+        }
+
+        function updateMyProtocolsFilter(selectedFilter) {
+
+            $('#myProtocolsFilter .card').removeClass('bg-light bg-info text-white');
+
+            // TODO CS2: make more elegant
+            $('#authorFilter').removeClass('text-success');
+            $('#reviewerFilter').removeClass('text-danger');
+            $('#authorPanelFilter').removeClass('text-secondary');
+
+            var roleFilter = "*";
+            if (selectedFilter == '#author') {
+                $('#authorFilter').addClass('bg-info text-white');
+                $('#reviewerFilter').addClass('text-danger');
+                $('#authorPanelFilter').addClass('text-secondary');
+                roleFilter = ':hidden[value="@RoleTypes.Author"]';
+            }
+            else if (selectedFilter == '#reviewer') {
+                $('#authorFilter').addClass('text-success');
+                $('#reviewerFilter').addClass('bg-info text-white');
+                $('#authorPanelFilter').addClass('text-secondary');
+                roleFilter = ':hidden[value="@RoleTypes.Reviewer"]';
+            }
+            else if (selectedFilter == '#authorPanel') {
+                $('#authorFilter').addClass('text-success');
+                $('#reviewerFilter').addClass('text-danger');
+                $('#authorPanelFilter').addClass('bg-info text-white');
+                roleFilter = ':hidden[value="@RoleTypes.Editor"]';
+            }
+            else {
+                $('#allFilter').addClass('bg-info text-white');
+                $('#authorFilter').addClass('text-success');
+                $('#reviewerFilter').addClass('text-danger');
+                $('#authorPanelFilter').addClass('text-secondary');
+            }
+            $('#myProtocolCards .card').each(function () {
+                if ($(this).has(roleFilter).length == 0) {
+                    $(this).hide();
+                }
+                else {
+                    $(this).show();
+                }
+            });
+        }
+
+        $(document).ready(function () {
+
+            setUpCardTitles();
+            updateMyProtocolsFilter(window.location.hash);
+
+            $('#myProtocolsFilter .card').hover(function () {
+                myProtocolsFilterHover(this);
+            });
+
+            $('#myProtocolsFilter .card').click(function () {
+                updateMyProtocolsFilter(this.hash);
+            });
+
+            $('#myProtocolCards .card').hover(function () {
+                $(this).toggleClass('bg-light');
+            });
+
+        });
+    </script>
+}

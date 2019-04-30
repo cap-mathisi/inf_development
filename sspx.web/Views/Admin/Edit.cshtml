@@ -1,0 +1,16 @@
+﻿@{
+    ViewData["Title"] = "Admin";
+    ViewData["Protocol"] = "Protocols";
+}
+@{
+    Layout = null;
+}
+@model IEnumerable<sspx.core.entities.Protocol>
+<h2>Admin</h2>
+<h3>Will put Admin UI here...</h3>
+<ul>
+    @foreach (var protocol in Model)
+{
+    <li>@protocol.ProtocolId<br />@protocol.ProtocolName</li>
+}
+</ul>

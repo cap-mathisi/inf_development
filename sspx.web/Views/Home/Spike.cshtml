@@ -1,0 +1,47 @@
+﻿@{
+    ViewData["Title"] = "SSPx Architecture Spike";
+}
+
+@{
+    Layout = null;
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <h1>SSPx Architecture Spike - Release Block #1 (2018.06.29)</h1>
+        <h2>API Definitions</h2>
+        <ul>
+            <li><a href="/swagger">API Documentation</a></li>
+        </ul>
+        <h2>Users (MVC)</h2>
+        <ul>
+            <li><a asp-area="" asp-controller="User" asp-action="Load">Load Users</a></li>
+            <li><a asp-area="" asp-controller="User" asp-action="Index">List Users</a></li>
+        </ul>
+        <h2>Users (Razor Pages)</h2>
+        <ul>
+            <li><a asp-page="/Users/UsersLoad">Load Users</a></li>
+            <li><a asp-page="/Users/UsersList">List Users</a></li>
+        </ul>
+        <h2>Protocols (MVC)</h2>
+        <ul>
+            <li><a asp-area="" asp-controller="Protocol" asp-action="Load">Load Protocols</a></li>
+            <li><a asp-area="" asp-controller="Protocol" asp-action="Index">List Protocols</a></li>
+        </ul>
+        <h2>Protocols (Razor Pages)</h2>
+        <ul>
+            <li><a asp-page="/Protocols/ProtocolsLoad">Load Protocols</a></li>
+            <li><a asp-page="/Protocols/ProtocolsList">List Protocols</a></li>
+        </ul>
+    </div>
+    <div class="col-md-6">
+        <h2>About SSPx</h2>
+        <ul>
+            <li>GitHub coming soon.</li>
+        </ul>
+        <h2>About SSP</h2>
+        <ul>
+            <li><a href="https://github.com/vparekh/SSP">GitHub</a></li>
+        </ul>
+    </div>
+</div>

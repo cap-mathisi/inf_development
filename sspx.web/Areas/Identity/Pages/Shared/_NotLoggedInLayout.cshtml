@@ -1,0 +1,60 @@
+﻿@{ 
+    var showRequiredLabel = true;
+    if (ViewData["ShowRequiredLabel"] != null)
+    {
+        showRequiredLabel = (bool)ViewData["ShowRequiredLabel"];
+    }
+
+    var showReturnToLogin = true;
+    if (ViewData["ShowReturnToLogin"] != null){
+        showReturnToLogin = (bool)ViewData["ShowReturnToLogin"];
+    }
+
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <partial name="_StylesScriptsPartial" />
+    <link rel="stylesheet" href="~/css/sspx/identity.css?v=20190107">
+    @RenderSection("TopScripts", required: false)
+    <partial name="_StyleOverridesLinkLast" />
+</head>
+<body>
+    @*
+        TODO: if we want cookie consent popup, uncomment and get this to show up correctly (right now it's a weird small button)
+        <partial name="_CookieConsentPartial" />
+    *@
+    <div class="container-fluid">
+        <div class="m-3">
+            <img id="capLogo" alt="CAP Logo" src="~/images/CAP_logo_rgb.png">
+        </div>
+        <div class="row mt-3">
+            <div class="col-sm-9" style="margin-left:72px">
+                <div class="d-flex">
+                    <div>
+                        <h4>@ViewData["Title"]</h4>
+                        @if (showRequiredLabel)
+                        {
+                            <span class="text-danger">*Required</span>
+                        }
+                    </div>
+                    @if (showReturnToLogin)
+                    {
+                        <div class="ml-auto">
+                            <i class="fas fa-long-arrow-alt-left fa-2x align-middle pr-1"></i>
+                            <a asp-area="Identity" asp-page="./Login">Return to SSP Login Page</a>
+                        </div>
+                    }
+                </div>
+                <hr />
+                @RenderBody()
+            </div>
+            <div class="col-sm-3"></div>
+        </div>
+    </div>
+    @RenderSection("BottomScripts", required: false)
+</body>
+</html>

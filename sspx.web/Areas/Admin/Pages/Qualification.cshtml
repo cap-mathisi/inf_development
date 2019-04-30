@@ -1,0 +1,79 @@
+﻿@page "{qualificationKey:int?}"
+@namespace sspx.Areas.Admin.Pages
+@model QualificationPageModel
+@using sspx.Areas.Admin.data
+@using sspx.core.entities
+@using sspx.infra.data;
+@using sspx.web.Helpers;
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    var pageLoadingWithoutModel = (Model.QualificationsSearchModel == null);
+    if (pageLoadingWithoutModel == true)
+    {
+        var searchModelBackup = HttpContext.Session.Get<SearchModel>("qualificationSearchModel");
+        if (searchModelBackup != null)
+        {
+            Model.QualificationsSearchModel = searchModelBackup;
+        }
+    }
+}
+
+@section leftSection {
+    <partial name="_Search" for="QualificationsSearchModel" />
+}
+
+@section mainSection {
+    <h5>Create Qualification</h5>
+    @if (string.IsNullOrWhiteSpace(@Model.ErrorMessage) == false)
+    {
+        <p class="text-danger">@Model.ErrorMessage</p>
+    }
+    <div asp-validation-summary="All" class="text-danger"></div>
+    @if (string.IsNullOrWhiteSpace(@Model.StatusMessage) == false)
+    {
+        <p class="text-success">@Model.StatusMessage</p>
+    }
+
+    <form method="post">
+        <input type="hidden" asp-for="QualificationKey" />
+        <div class="form-row">
+            <div class="form-group col">
+                <label asp-for="QualificationTxt"></label>
+                <input asp-for="QualificationTxt" />
+            </div>
+            <div class="form-group col">
+                <label asp-for="Description"></label>
+                <input asp-for="Description" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="ml-3">
+                <label asp-for="Active"></label>
+                <input type="checkbox" asp-for="Active" />
+                <span id="activeIndicator"></span>
+                <!-- TODO: show as button
+                            https://getbootstrap.com/docs/4.0/components/buttons/#checkbox-and-radio-buttons
+                        <div class="btn-group-toggle" data-toggle="buttons">
+                          <label class="btn btn-secondary active">
+                            <input type="checkbox" checked autocomplete="off"> Checked
+                          </label>
+                        </div>
+
+                        <div class="btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-secondary active">
+                                <input type="checkbox" asp-for="Active" />
+                            </label>
+                        </div>
+                -->
+            </div>
+        </div>
+        <div class="row">
+            <button type="submit" asp-page-handler="Save" class="btn btn-primary btn-sm ml-3">Save</button>
+            @if (Model.QualificationKey > 0)
+            {
+                <small class="align-self-center ml-4"><a asp-area="Admin" asp-page="Qualification" asp-route-qualificationKey="@DefaultValue.Key">Cancel changes</a></small>
+            }
+        </div>
+    </form>
+}

@@ -1,0 +1,124 @@
+﻿@page "{userKey:int?}"
+@namespace sspx.Areas.Admin.Pages
+@model UserPageModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    bool editMode = @Model.RouteData.Values["userKey"] != null;
+}
+
+@section mainSection {
+    <form method="post">
+        <div class="form-group row">
+            <label asp-for="SearchTerm" class="col-sm-3 col-form-label"></label>
+            <div class="col-sm-9">
+                <div class="form-row">
+                    <div class="col-sm-9">
+                        <input type="text" asp-for="SearchTerm" class="form-control" id="inputSearch" placeholder="Enter a name to search" />
+                        <span class="alert-danger" asp-validation-for="SearchTerm"></span>
+                    </div>
+                    <div class="col-sm-3">
+                        <button type="submit" asp-page-handler="Search" class="btn btn-primary">Search</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    @if (string.IsNullOrWhiteSpace(@Model.ErrorMessage) == false)
+    {
+        <p class="text-danger">@Model.ErrorMessage</p>
+    }
+    @if (string.IsNullOrWhiteSpace(@Model.StatusMessage) == false)
+    {
+        <p class="text-success">@Model.StatusMessage</p>
+    }
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <form method="post">
+        <input type="hidden" asp-for="UserKey" />
+        <div class="form-group row">
+            <label asp-for="UserID" class="col-sm-3 col-form-label"></label>
+            <div class="col-sm-9">
+                <input type="text" asp-for="UserID" class="form-control" id="inputUserId" readonly="@editMode" />
+
+            </div>
+        </div>
+        <div class="form-group row">
+            <label asp-for="FirstName" class="col-sm-3 col-form-label"></label>
+            <div class="col-sm-9">
+                <div class="form-row">
+                    <div class="col">
+                        <input type="text" asp-for="FirstName" class="form-control" id="inputUserNameFirst" placeholder="First" />
+                    </div>
+                    <div class="col">
+                        <input type="text" asp-for="MiddleName" class="form-control" id="inputUserNameMiddle" placeholder="Middle" />
+                    </div>
+                    <div class="col">
+                        <input type="text" asp-for="LastName" class="form-control" id="inputUserNameLast" placeholder="Last" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label asp-for="WorkPhone" class="col-sm-3 col-form-label"></label>
+            <div class="col-sm-9">
+                <div class="form-row">
+                    <div class="col">
+                        <input type="tel" asp-for="WorkPhone" class="form-control" id="inputPhoneWork" placeholder="Work" />
+                    </div>
+                    <div class="col">
+                        <input type="tel" asp-for="HomePhone" class="form-control" id="inputPhoneHome" placeholder="Home" />
+                    </div>
+                    <div class="col">
+                        <input type="tel" asp-for="CellPhone" class="form-control" id="inputPhoneCell" placeholder="Cell" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label asp-for="Password" class="col-sm-3 col-form-label"></label>
+            <div class="col-sm-9">
+                <input type="password" asp-for="Password" class="form-control" id="inputPassword" placeholder="Password">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label asp-for="Email" class="col-sm-3 col-form-label"></label>
+            <div class="col-sm-9">
+                <input type="email" asp-for="Email" class="form-control" id="inputEmail" placeholder="Email">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label asp-for="UserTypeKey" class="col-sm-3 col-form-label"></label>
+            <div class="col-sm-9">
+                <select multiple asp-for="UserTypeKey" class="form-control" id="inputUserType">
+                    <option value=""></option>
+                    @foreach (var userType in Model.UserTypes)
+                    {
+                        <option value="@userType.UserTypeKey">@userType.Type</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label asp-for="Qualifications" class="col-sm-3 col-form-label"></label>
+            <div class="col-sm-9">
+                <select class="form-control" id="inputQualification">
+                    <option value="">Make a selection</option>
+                    @foreach (var qualification in Model.UserQualifications)
+                    {
+                        <option value="@qualification.QualificationKey">@qualification.QualificationTxt</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="form-group form-row">
+            <div class="col">
+                <button type="submit" asp-page-handler="Create" class="btn btn-primary" disabled="@editMode">Create User</button>
+            </div>
+            <div class="col">
+                <button type="submit" asp-page-handler="Update" class="btn btn-primary" disabled="@(editMode == false)">Update User</button>
+            </div>
+            <div class="col">
+                <button type="submit" asp-page-handler="Delete" class="btn btn-primary" disabled="@(editMode == false)">Delete User</button>
+            </div>
+        </div>
+    </form>
+}

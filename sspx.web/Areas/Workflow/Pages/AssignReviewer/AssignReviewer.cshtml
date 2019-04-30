@@ -1,0 +1,319 @@
+﻿@page "{protocolVersionsKey:int?}"
+@model sspx.web.Areas.Workflow.Pages.AssignReviewer.AssignReviewerModel
+@using sspx.Areas.Admin.data
+@using sspx.core.entities
+@using sspx.web.Helpers;
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+}
+
+<style>
+    .textchange {
+        font-weight: 700;
+        font-style: normal;
+        font-size: 12px;
+        color: #666666;
+    }
+</style>
+@section TopScripts{
+    <partial name="_KendoStylesScripts" />
+}
+
+@section leftSection {
+
+}
+
+@section mainSection {
+    <div class="row" id="showerror">
+        @if (string.IsNullOrWhiteSpace(@Model.AssignReviewerInput.ErrorMessage) == false)
+        {
+            <p class="text-danger">@Model.AssignReviewerInput.ErrorMessage</p>
+        }
+
+        @*<div asp-validation-summary="All" class="text-danger"></div>
+            @if (string.IsNullOrWhiteSpace(@Model.AssignReviewerInput.StatusMessage) == false)
+            {
+                <p class="text-success">@Model.AssignReviewerInput.StatusMessage</p>
+            }*@
+
+
+        <div asp-validation-summary="All" class="text-danger mt-2"></div>
+    </div>
+
+    <form class="mt-4" method="post" style="font-size: 12px;" id="assignReviewerForm">
+        <div class="row">
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+                <label style="color:#ff0000">*&nbsp;&nbsp;Required</label>
+            </div>
+        </div>
+
+        <div class=row style="padding-left:3px">
+
+            @*<div class="col-md-1">
+                    <label>Primary Authors:</label>
+                </div>*@
+            <div class="col-md-11">
+                <label>Primary Authors:</label>
+                @if (Model.AssignReviewerInput.Authors != null)
+                {
+                    @for (int i = 0; i < Model.AssignReviewerInput.Authors.Count; i++)
+                    {
+                        <label asp-for="AssignReviewerInput.Authors[i].AuthorName">@Model.AssignReviewerInput.Authors[i].AuthorName</label>
+                        <span>,</span>
+                        <input type="hidden" asp-for="AssignReviewerInput.Authors[i].AuthorName" />
+                        <input type="hidden" asp-for="AssignReviewerInput.Authors[i].Qualifications" />
+                        <input type="hidden" asp-for="AssignReviewerInput.Authors[i].Email" />
+                        <input type="hidden" asp-for="AssignReviewerInput.Authors[i].FirstName" />
+                        <input type="hidden" asp-for="AssignReviewerInput.Authors[i].ProtocolName" />
+                    }
+                }
+                else
+                {
+                    <div class="col-md-4"><span><b>No Authors against this protocal version</b></span></div>
+                }
+
+            </div>
+        </div>
+
+
+        <div class="form-group row" style="padding-left:3px">
+            <div class="col-md-3">
+                <span style=" font-weight: 700;
+        font-style: normal;
+        font-size: 12px;
+        color: #666666;">Preview Time</span>
+            </div>
+        </div>
+
+        <input type="hidden" asp-for="AssignReviewerInput.ProtocolVersionsKey" />
+        <div class="form-group row" style="padding-left:3px">
+            <div class="col-md-1">
+                <label asp-for="AssignReviewerInput.ReviewStartDate"><span style="color:#ff0000">*&nbsp;&nbsp;</span>From:</label>
+            </div>
+            <div class="col-md-3">
+                <input asp-for="AssignReviewerInput.ReviewStartDate" id="fromdatepicker" title="fromdatepicker" class="form-control form-control-sm" style="width: 100%" onblur="FromDateChange();" />
+            </div>
+            <div class=" col-md-1">
+                <label asp-for="AssignReviewerInput.ReviewEndDate"><span style="color:#ff0000">*&nbsp;&nbsp;</span>To:</label>
+            </div>
+            <div class="col-md-3">
+                <input asp-for="AssignReviewerInput.ReviewEndDate" id="todatepicker" title="todatepicker" class="form-control form-control-sm" style="width: 100%" onblur="ToDateChange();" />
+            </div>
+        </div>
+        <div class="form-group row" style="padding-left:3px">
+            <div class="col-md-3">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" id="select_all" asp-for="AssignReviewerInput.CheckAll">
+                    <label class="form-check-label" asp-for="AssignReviewerInput.CheckAll"></label>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="form-group row">
+            @if (Model.AssignReviewerInput.Reviewers != null)
+            {
+                @for (int i = 0; i < Model.AssignReviewerInput.Reviewers.Count; i++)
+                {
+                    if (@Model.AssignReviewerInput.Reviewers[i].Selected)
+                    {
+                        <div class="form-check col-md-4">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input checkbox" disabled="disabled" asp-for="AssignReviewerInput.Reviewers[i].Selected">
+                                <label class="form-check-label" asp-for='AssignReviewerInput.Reviewers[i].Selected'>@Model.AssignReviewerInput.Reviewers[i].ReviewerName</label>
+                                @*<label asp-for="AssignReviewerInput.Reviewers[i].Qualifications">@Model.AssignReviewerInput.Reviewers[i].Qualifications</label>*@
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].ReviewerId" />
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].ReviewerName" />
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].ProtocolVersionUserRoleKey" />
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].Email" />
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].FirstName" />
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].ProtocolName" />
+                                @*<input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].Selected" />*@
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-check col-md-4">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input checkbox"  asp-for="AssignReviewerInput.Reviewers[i].Selected">
+                                <label class="form-check-label" asp-for='AssignReviewerInput.Reviewers[i].Selected'>@Model.AssignReviewerInput.Reviewers[i].ReviewerName</label>
+                                @*<label asp-for="AssignReviewerInput.Reviewers[i].Qualifications">@Model.AssignReviewerInput.Reviewers[i].Qualifications</label>*@
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].ReviewerId" />
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].ReviewerName" />
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].ProtocolVersionUserRoleKey" />
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].Email" />
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].FirstName" />
+                                <input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].ProtocolName" />
+                                @*<input type="hidden" asp-for="AssignReviewerInput.Reviewers[i].Selected" />*@
+                            </div>
+                        </div>
+                    }
+                }
+            }
+            else
+            {
+                <div class="col-md-4"><span><b>No Reviewers against this protocal version</b></span></div>
+            }
+
+        </div>
+
+        <div class="row" style="padding-left:3px">
+            <div class="col-md-4">
+                <div class="form-check form-check-inline">
+                    <span style="color:#ff0000">*</span>&nbsp;&nbsp;
+                    <input class="form-check-input" asp-for="AssignReviewerInput.isEmail">
+                    <label class="form-check-label" asp-for="AssignReviewerInput.isEmail"></label>
+                </div>
+            </div>
+        </div>
+        <div class="row"><p></p></div>
+        <div class="row" style="padding-left:3px">
+            <div class="col-md-3">
+                <span style=" font-weight: 700;
+        font-style: normal;
+        font-size: 12px;
+        color: #666666;">Custom Message</span>
+            </div>
+        </div>
+
+        <div class="row" style="padding-left:3px">
+            <div class="col-md-3">
+                <textarea asp-for="AssignReviewerInput.CustomMessage" rows="5" cols="100"></textarea>
+            </div>
+        </div>
+
+        <div class="row mt-4" style="padding-left:3px">
+            <button type="submit" asp-page-handler="Save" class="btn btn-primary btn-sm ml-3 text-uppercase" id="form-btn" >Save</button>
+
+            <small class="align-self-center ml-4"><a asp-area="Dashboard" asp-page="Index" asp-route-protocolKey="@DefaultValue.Key">Cancel</a></small>
+
+        </div>
+    </form>
+}
+
+@section BottomScripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //select all checkboxes
+            $("#select_all").change(function () {  //"select all" change
+                $(".checkbox").prop('checked', $(this).prop("checked")); //change all ".checkbox" checked status
+            });
+
+            //".checkbox" change
+            $('.checkbox').change(function () {
+                //uncheck "select all", if one of the listed checkbox item is unchecked
+                if (false == $(this).prop("checked")) { //if this item is unchecked
+                    $("#select_all").prop('checked', false); //change "select all" checked status to false
+                }
+                //check "select all" if all checkbox items are checked
+                if ($('.checkbox:checked').length == $('.checkbox').length) {
+                    $("#select_all").prop('checked', true);
+                }
+            });
+
+
+            
+            var fromDate = $('#fromdatepicker').val();
+
+            $(function () {
+                var datepicker = $('#fromdatepicker').kendoDatePicker({
+                    value: fromDate,
+                    min: fromDate,
+                    month: {
+                        empty: '<div style="padding:11px" class="k-state-disabled">#= data.value #</div>'
+                    }
+                }).data('kendoDatePicker');
+
+
+            });
+
+            var toDate = $('#todatepicker').val();
+            
+
+            $(function () {
+                var datepicker = $('#todatepicker').kendoDatePicker({
+                    value: toDate,
+                    min: toDate,
+                    month: {
+                        empty: '<div style="padding:11px"  class="k-state-disabled">#= data.value #</div>'
+                    }
+                }).data('kendoDatePicker');
+            });
+        });
+
+
+        function FromDateChange() {
+            var todayDate = new Date();
+            var month = todayDate.getUTCMonth() + 1; //months from 1-12
+            var day = todayDate.getUTCDate();
+            var year = todayDate.getUTCFullYear();
+
+            todayDate = month + "/" + day + "/" + year;
+            var fromDate = new Date($("#fromdatepicker").val());
+            var todate = new Date($("#todatepicker").val()); 
+            if (new Date(fromDate) < new Date(todayDate)) {//compare end <=, not >=
+                $('#fromdatepicker').val('');
+                alert("From date should be greater than today date");
+
+            } else {
+                if ($("#fromdatepicker").val() != "" && $("#fromdatepicker").val() != "") {
+                    if (new Date(todate) < new Date(fromDate)) {//compare end <=, not >=
+                        alert("To date should be greater than From date");
+
+                    }
+                }
+            }    
+        }
+
+        function ToDateChange() {
+            var todayDate = new Date();
+            var month = todayDate.getUTCMonth() + 1; //months from 1-12
+            var day = todayDate.getUTCDate();
+            var year = todayDate.getUTCFullYear();
+
+            todayDate = month + "/" + day + "/" + year;
+            var todate = $("#todatepicker").val();
+            var fromDate = $("#fromdatepicker").val();
+            if (new Date(todate) < new Date(todayDate)) {//compare end <=, not >=
+                $('#todatepicker').val('');
+                alert("To date should be greater than today date");
+            }
+            else {
+                if ($("#fromdatepicker").val() != "" && $("#fromdatepicker").val() != "") {
+                    if (new Date(todate) < new Date(fromDate)) {//compare end <=, not >=
+                        alert("To date should be greater than From date");
+
+                    }
+                }
+            }
+        }
+
+        $('#form-btn').click(function (e) {
+            var ischeck = false;      
+            $('.checkbox').each(function () {
+                var id = $(this).attr('id');
+                if ($('#' + id).is(':checked')) {
+                    ischeck = true;
+                }
+            });
+            if (ischeck != true)
+            {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                alert("Please select atleast one reviewer");
+                return false;
+            }      
+        });
+    </script>
+}

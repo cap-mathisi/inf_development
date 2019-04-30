@@ -1,0 +1,15 @@
+﻿@{
+    ViewData["Protocol"] = "Protocols";
+}
+@{
+    Layout = null;
+}
+@model IEnumerable<sspx.core.entities.Protocol>
+<h2>Protocols (MVC View)</h2>
+<h3>Initial Protocol List...</h3>
+<ul>
+    @foreach (var protocol in Model)
+    {
+        <li>@protocol.ProtocolId<br />@protocol.ProtocolName</li>
+    }
+</ul>

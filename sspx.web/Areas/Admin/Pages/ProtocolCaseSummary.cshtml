@@ -1,0 +1,744 @@
+﻿@* CS2. Note that protocolVersionKey is NOT optional for this page. *@
+@page "{protocolVersionKey:int}"
+@namespace sspx.Areas.Admin.Pages
+@model ProtocolCaseSummaryModel
+@using sspx.Areas.Admin.data
+@using sspx.core.entities
+@using sspx.web.Helpers;
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+
+@{
+    var pageLoadingWithoutModel = (Model.ProtocolsWithGroupsSearchModel == null);
+    if (pageLoadingWithoutModel == true)
+    {
+        var searchModelBackup = HttpContext.Session.Get<SearchModel>("protocolsWithGroupsSearchModel");
+        if (searchModelBackup != null)
+        {
+            Model.ProtocolsWithGroupsSearchModel = searchModelBackup;
+        }
+    }
+
+    ViewData["Title"] = Model.Title;
+}
+
+@section TopScripts{
+    <partial name="_KendoStylesScripts" />
+}
+
+@section leftSection {
+    <partial name="_Search" for="ProtocolsWithGroupsSearchModel" />
+}
+
+@section mainSection {
+    <style>
+        .ax_default {
+            font-family: 'Arial';
+            font-weight: 400;
+            font-style: normal;
+            font-size: 13px;
+            color: #333333;
+            text-align: center;
+            line-height: normal;
+        }
+    </style>
+    <h5>@Model.Title</h5>
+    @if (string.IsNullOrWhiteSpace(@Model.StatusMessage) == false)
+    {
+        <p class="text-success">@Model.StatusMessage</p>
+    }
+    <div class="btn-group btn-group-sm" role="group">
+        <a asp-area="Admin" asp-page="Protocol" asp-route-protocolKey="@Model.ProtocolKeyForCurrentVersion" class="btn btn-secondary pr-1">
+            <span>Name</span>
+            <i class="fas fa-chevron-right ml-2 mr-0"></i>
+        </a>
+        <button type="button" class="btn btn-secondary pr-1" disabled>
+            <span>Workflow</span>
+            <i class="fas fa-chevron-right ml-2 mr-0"></i>
+        </button>
+        <button type="button" class="btn btn-secondary pr-1">
+            <span>Case Summary</span>
+            <i class="fas fa-chevron-right ml-2 mr-0"></i>
+        </button>
+        <button type="button" class="btn btn-secondary pr-1" disabled>
+            <span>Notes &amp; References</span>
+            <i class="fas fa-chevron-right ml-2 mr-0"></i>
+        </button>
+        <button type="button" class="btn btn-secondary pr-1" disabled>
+            <span>Authors</span>
+            <i class="fas fa-chevron-right ml-2 mr-0"></i>
+        </button>
+        <button type="button" class="btn btn-secondary pr-2" disabled>
+            <span>Coverpage</span>
+        </button>
+    </div>
+    <div asp-validation-summary="All" class="text-danger mt-2"></div>
+    <form class="mt-4" method="post">
+        <input type="hidden" asp-for="ProtocolVersionKey" />
+        <input type="hidden" asp-for="CaseSummaryIDs" />
+
+        <div class="border p-3">
+            <div class="row">
+                <div class="form-group col-md-5">
+                    <label asp-for="ProtocolKey"></label>
+                    <select asp-for="ProtocolKey" class="form-control form-control-sm" asp-page-handler="DowpdownChange">
+                        <option value="-1">Select</option>
+                        @foreach (var protocol in Model.ProtocolsWithGroupsForDropDown)
+                        {
+                            <option value="@protocol.ProtocolKey">@protocol.ProtocolName</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <label>Version</label>
+                    <select asp-for="ProtocolKey" class="form-control form-control-sm" asp-page-handler="DowpdownChange">
+                        <option value="-1">Select</option>
+                        <option value="1">Released</option>
+                        <option value="2">Current</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-5">
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-5">
+                    Case Summary
+                </div>
+                <div class="form-group col-md-1"></div>
+                <div class="form-group col-md-5">
+                    Selected Case Summary
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-5 ">
+                    <div id="caseSummaryNodesAll"></div>
+                </div>
+                <div class="form-group col-md-1">
+                    <button id="caseSummaryRightArrow" type="button" class="btn btn-secondary rounded-0 mt-5">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="form-group col-md-5 ">
+                    <div id="caseSummaryNodesSelected"></div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <button type="button" id="DeletedRightCaseSummary" onclick="return clearRightNode()" class="btn btn-outline-danger btn-sm mb-3"><i class="text-danger"></i>&nbsp;&nbsp;Delete</button>
+                
+            </div>
+        </div>
+        <div class="row mt-4">
+            <button type="submit" asp-page-handler="SaveCaseSummary" class="btn btn-primary btn-sm ml-3 text-uppercase" disabled="@(Model.EditMode == true)">Save &amp; Continue</button>
+            <input type="hidden" asp-for="CopyProtocolKey" id="CopyProtocolKey" />
+            <input type="hidden" asp-for="TemplateVersionsKey" id="TemplateVersionsKey" />
+            <input type="hidden" asp-for="ProtocolKeyForCurrentVersion" id="ProtocolKeyForCurrentVersion" />
+            <input type="hidden" asp-for="version" id="version" />
+            @if (Model.EditMode == true)
+            {
+                <small class="align-self-center ml-4"><a asp-area="Admin" asp-page="ProtocolCaseSummary" asp-route-protocolKey="@DefaultValue.Key">Cancel changes</a></small>
+            }
+        </div>
+    </form>
+}
+
+@section BottomScripts{
+    <style>
+        #protocolNodes .k-item .k-in {
+            width: 97%;
+            white-space: normal;
+            padding: 2px !important;
+        }
+
+            #protocolNodes .k-item .k-in .nodeLabel {
+                display: inline-block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                vertical-align: middle;
+            }
+    </style>
+    <script id="node-template" type="text/kendo-ui-template">
+        <span class='#= getIconClass(true, item.itemType) #'></span>
+        <span style="width:86%; display:inline-block">
+            # if (item.longText.length > 35) { #
+            <span class='nodeLabel' style="width: 85%" title="#= item.longText #">#= item.longText #</span>
+            # } else { #
+            <span class='nodeLabel' title="#= item.longText #">#= item.longText #</span>
+            # } #
+        </span>
+    </script>
+    <script id="checkbox-template" type="text/kendo-ui-template">
+        @*
+            TODO CS2: improve style e.g. something like...
+                <input type='checkbox' #=item.checked ? 'checked' : '' # class='k-checkbox' tabindex='-1'>
+                <span class='k-checkbox-label checkbox-span'></span>
+        *@
+        # if (item.level() == 0) { #
+        <input type='checkbox' #=item.checked ? 'checked' : '' #>
+        # } #
+    </script>
+
+    <script src="~/js/sspx/SSPxProtocol.js"></script>
+    <script type="text/javascript">
+
+        @*//var currentProtocol = '@Model.protocolCkey';
+        //var protocolVersionKey = '@Model.protocolVersionKey';*@
+        var selectedElement = null;
+        var currentNode = '';
+        var nodeToCopy = '';
+        var insertType = 0;
+        var itemType = 0;
+        var Firsttime = 0;
+        var saveContentActive = false;
+        var checkSpell = true;
+        var saveNodeHidden = false;
+        var saveSuccess = false;
+        var isCut = false;
+        var itemOnly = false;
+        var jqPrevNode = null;
+        var checkedNodeList = [];
+        var rightTreeViewTemp = $("#caseSummaryNodesSelected").data("kendoTreeView");
+        var leftTreeViewDataTemp = $("#caseSummaryNodesAll").data("kendoTreeView");
+        var selectedProtocolDropdown = $("#ProtocolKey option:selected").val();
+        
+
+        var caseSummaryDetailSelected = new kendo.data.HierarchicalDataSource({
+            data: [],
+            schema: {
+                model: {
+                    id: "id",
+                    hasChildren: "hasItems",
+                    children: "items"
+                }
+            }
+        });
+
+        // TODO CS2: eventually put this dummy data behind an HTTP Endpoint
+        var caseSummaryDetailEmpty = new kendo.data.HierarchicalDataSource({
+            data: [],
+            schema: {
+                model: {
+                    id: "id",
+                    hasChildren: "hasItems",
+                    children: "items"
+                }
+            }
+        });
+
+        function RemoveCheckedItems(treeview, nodes)
+        {
+            for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+                if (node.checked) {
+                    var item = treeview.findByUid(node.uid);
+                    treeview.remove(item);
+                }
+                else if (node.hasChildren) {//debugger;
+                    RemoveCheckedItems(treeview, node.children.view());
+                }
+            }
+        }
+
+        function RemoveUnCheckedItems(treeview, nodes) {
+            for (var i = 0; i < nodes.length; i++) {
+                //debugger;
+                var node = nodes[i];
+                if (node.checked == undefined) {
+                    var item = treeview.findByUid(node.uid);
+                    treeview.remove(item);
+                }
+                if (node.hasChildren) {
+                    //debugger;
+                    RemoveUnCheckedItems(treeview, node.children.view());
+                }
+            }
+        }
+        function clearRightNode() {
+            //alert("clearRightNode");
+            debugger;
+            var treeview = $("#caseSummaryNodesSelected").data("kendoTreeView");
+            if (treeview) {
+                RemoveCheckedItems(treeview, treeview.dataSource.view());
+            } 
+        }
+
+        function clearUnselectedRightNode() {
+            //alert("clearUnselectedRightNode");
+            //debugger;
+            var treeview = $("#caseSummaryNodesSelected").data("kendoTreeView");
+            if (treeview) {
+                var treeviewnodes = treeview.dataSource.view();
+                for (var i = 0; i < treeviewnodes.length; i++) {
+                    var treeviewnode = treeviewnodes[i];
+                    if (treeviewnode.hasChildren) {
+                        RemoveUnCheckedItems(treeview, treeviewnode.children.view());
+                    }
+                }
+            }
+        }
+
+        function clearAndReloadLeftTreeView(newDataSource) {
+
+            var leftTreeView = $("#caseSummaryNodesAll");
+            var leftTreeViewData = leftTreeView.data("kendoTreeView");
+            leftTreeViewData.destroy();
+            leftTreeView.find('ul:first').remove();
+            leftTreeView.removeAttr('data-role').removeAttr('class').removeAttr('tabindex');
+
+            loadTreeView(leftTreeView, newDataSource);
+        }
+
+        function clearRightTreeView(newDataSource) {
+            //debugger;
+            var RightTreeView = $("#caseSummaryDetailSelected");
+            var leftTreeViewData = leftTreeView.data("kendoTreeView");
+            leftTreeViewData.destroy();
+            if (RightTreeView.find('ul:first').length > 0) {
+                RightTreeView.find('ul:first').remove();
+                RightTreeView.removeAttr('data-role').removeAttr('class').removeAttr('tabindex');
+            }
+            loadTreeView(RightTreeView, newDataSource);
+        }
+
+        //function clearTreeView(newDataSource) {
+        //    var leftTreeView = $("#caseSummaryNodesAll");
+        //    var leftTreeViewData = leftTreeView.data("kendoTreeView");
+        //    leftTreeViewData.destroy();
+        //    var leftTreeView = $("#caseSummaryNodesSelected");
+        //    var leftTreeViewData = leftTreeView.data("kendoTreeView");
+        //    leftTreeViewData.destroy();
+        //}
+
+        function loadTreeView(treeViewToUpdate, newDataSource) {
+            //debugger;
+            //treeViewToUpdate.kendoTreeView({
+            //    checkboxes: {
+            //        template: kendo.template($("#checkbox-template").html())
+            //    },
+            //    dataSource: newDataSource,
+            //    template: kendo.template($("#node-template").html()),
+            //});
+            treeViewToUpdate.kendoTreeView({
+                template: kendo.template($("#node-template").html()),
+                checkboxes: {
+                    checkChildren: true
+                },
+                dataSource: newDataSource,
+                //check: onCheck,
+                //expand: onExpand
+                check: function (e) {
+                    this.expandRoot = e.node;
+                    this.expand($(this.expandRoot).find(".k-item").addBack());
+                },
+                dataBound: function (e) {
+                    if (this.expandRoot) {
+                        this.expand(e.node.find(".k-item"));
+                    }
+                }
+                //,                expand: function (e) {
+                //    this.expandRoot = e.node;
+                //    this.expand($(this.expandRoot).find(".k-item").addBack());
+                //},
+                //dataBound: function (e) {
+                //    if (this.expandRoot) {
+                //        this.expand(e.node.find(".k-item"));
+                //    }
+                //}
+            });
+            var treeview = treeViewToUpdate.data("kendoTreeView");
+            //treeview.expand(".k-item");
+            treeview.bind("change", tree_change);
+            
+            //treeview.expand("li:first");
+        }
+
+        function onCheck() {
+            var checkedNodes = [];
+            var treeView = $("#caseSummaryNodesAll").data("kendoTreeView");
+
+            getCheckedNodes(treeView.dataSource.view(), checkedNodes);           
+        }
+
+        function checkUncheckAllNodes(nodes, checked) {
+            for (var i = 0; i < nodes.length; i++) {
+                nodes[i].set("checked", checked);
+
+                if (nodes[i].hasChildren) {
+                    checkUncheckAllNodes(nodes[i].children.view(), checked);
+                }
+            }
+        }
+
+        function getCheckedNodes(nodes, checkedNodes) {
+            var node;
+
+            for (var i = 0; i < nodes.length; i++) {
+                node = nodes[i];
+
+                if (node.checked) {
+                    checkedNodes.push({ text: node.text, id: node.id });
+                }
+
+                if (node.hasChildren) {
+                    getCheckedNodes(node.children.view(), checkedNodes);
+                }
+            }
+        }
+
+        function checkUncheckAllNodes(nodes, checked) {
+            for (var i = 0; i < nodes.length; i++) {
+                nodes[i].set("checked", checked);
+
+                if (nodes[i].hasChildren) {
+                    checkUncheckAllNodes(nodes[i].children.view(), checked);
+                }
+            }
+        }
+
+        function onExpand(e) {
+            if ($("#filterText").val() == "") {
+                debugger;
+                $(e.node).find("li").show();
+            }
+        }
+
+        function tree_change(e) {
+            //Uncheck All Nodes
+            $("#caseSummaryNodesAll .k-checkbox-wrapper input").prop("checked", false).trigger("change");
+
+            //Check All Nodes
+            $("#caseSummaryNodesAll .k-checkbox-wrapper input").prop("checked", true).trigger("change");
+        }
+
+        function toggleCheckAll() {
+            if (checkButtonValue == "Uncheck") {
+                $("#caseSummaryNodesAll")
+            }
+        }
+
+        function getNode(e) {
+            //debugger;
+            //saveContent();
+            var item = this.dataItem(e.node);
+            //retrieveNode(item);
+        }
+
+        function onNodeCheck() {
+            saveNodeHidden = true;
+            //setSaveActive();
+        }
+
+        function updateCaseSummaryIDs() {
+            var rightTreeView = $("#caseSummaryNodesSelected").data("kendoTreeView");
+            var rightNodes = rightTreeView.dataSource.view();
+            //debugger;
+            var selectedSummaries = [];
+            for (var i = 0; i < rightNodes.length; i++) {
+                selectedSummaries.push(rightNodes[i].key);
+                //debugger;
+            }
+            //var selectedNodes = [],
+            //    treeView = $("#treeview").data("kendoTreeView"),
+            //    message;
+            //SelectedNodes(treeview.dataSource.view(), selectedNodes);
+            $("#CaseSummaryIDs").val(selectedSummaries);
+            debugger;
+            alert(selectedSummaries);
+            // TODO CS2: remove this after we set up SAVE function
+            console.log("Currently selected CaseSummaryIDs: " + $("#CaseSummaryIDs").val());
+        }
+
+        function SelectedNodes(nodes, seletededNodes) {
+            for (var i = 0; i < nodes.length; i++) {
+                if (nodes[i].checked) {
+                    seletededNodes.push(nodes[i].id);
+                }
+                if (nodes[i].hasChildren) {
+                    SelectedNodes(nodes[i].children.view(), seletededNodes);
+                }
+            }
+        }
+
+        function copyNodeLeftToRight() {
+            var leftTreeViewData = $("#caseSummaryNodesAll").data("kendoTreeView");
+            var rightTreeView = $("#caseSummaryNodesSelected").data("kendoTreeView");
+            debugger;
+            var leftNodes = leftTreeViewData.dataSource.view();
+            if (leftNodes.length > 0) {
+                var leftNodeSelector = "#caseSummaryNodesAll [data-uid='" + leftNodes[0].uid + "']";
+                var dataItemLeft = leftTreeViewData.dataItem(leftNodeSelector);
+                var dataOnlyLeft = dataItemLeft.children.options.data;
+            }
+            try {
+                var rightNodes = rightTreeView.dataSource.view();
+                if (rightNodes.length > 0) {
+                    for (var i = 0; i < rightNodes.length; i++) {
+                        //if (leftNodes[i].checked) {
+
+                        var rightNodeSelector = "#caseSummaryNodesSelected [data-uid='" + rightNodes[i].uid + "']";
+
+                        var dataItemRight = rightTreeView.dataItem(rightNodeSelector);
+                        var dataOnlyRight = dataItemRight.children.options.data;
+                        if (dataOnlyRight.key == dataItemLeft.key) {
+                            //$("#caseSummaryNodesSelected").data("kendoTreeView").dataSource([]);
+                            var parent = rightTreeView.findByText(dataOnlyRight.text);
+                            rightTreeView.remove(parent);
+                            rightTreeView.append(dataOnlyRight);
+                        }
+                        //else { rightTreeView.append(dataOnlyLeft);}
+                        else { rightTreeView.append(dataOnlyLeft.items, $("#caseSummaryNodesSelected .k-item:first")); }
+                    }
+                }
+                else {
+                    rightTreeView.append(dataOnlyLeft);
+                }
+                rightTreeView.expand(".k-item");
+                var leftTreeViewData = $("#caseSummaryNodesAll").data("kendoTreeView");
+                var rightTreeViewLoaded = $("#caseSummaryNodesSelected").data("kendoTreeView");
+                checkedNodeList = [];
+                if (rightTreeView.dataSource._view.length == 1) {
+                    Firsttime = 1;
+                    var checkedNodeListMulti = getCheckedItemsRight(leftTreeViewData.dataSource.view(), rightTreeView.dataSource.view());
+                }
+                else {
+                    Firsttime = 0;
+                    //rightTreeViewSingle = rightTreeView.dataSource._view[rightTreeView.dataSource._view.length - 1];
+                    //rightTreeViewSingle1 = rightTreeView.dataSource.view[rightTreeView.dataSource._view.length - 1];
+                    //rightTreeViewSingle2 = rightTreeView.dataSource.view(rightTreeView.dataSource._view.length - 1);
+                    var checkedNodeListMulti = getCheckedItemsRight(leftTreeViewData.dataSource.view(), rightTreeView.dataSource.view());
+                }
+            }
+            catch (err) {}
+            debugger;
+            //alert(checkedNodeListMulti);
+            //alert(checkedNodeList);
+            //rightTreeView.append(checkedNodeList);
+            //var LeftTreeViewSingle = getCheckedNodes123(leftTreeViewData.dataSource.view());
+            //rightTreeView.append(LeftTreeViewSingle);
+        }
+
+        function getCheckedNodes123(nodes) {
+            var node, childCheckedNodes;
+            var checkedNodes = [];
+
+            for (var i = 0; i < nodes.length; i++) {
+                node = nodes[i];
+                if (node.checked) {
+                    checkedNodes.push(node);
+                }
+
+                // to understand recursion, first
+                // you must understand recursion
+                if (node.hasChildren) {
+                    childCheckedNodes = getCheckedNodes123(node.children.view());
+                    if (childCheckedNodes.length > 0) {
+                        checkedNodes = checkedNodes.concat(childCheckedNodes);
+                    }
+                }
+
+            }
+
+            return checkedNodes;
+        }
+
+        function getCheckedItemsRight(nodesL, nodesR) {
+            debugger;
+            var node;
+            var rightTreeView = $("#caseSummaryNodesSelected").data("kendoTreeView");
+            //var checkedNodes = [];
+            var childCheckedNodes =[];
+            //var nodesL = leftTreeViewData.dataSource.view();x
+            //var nodesR = rightTreeView.dataSource.view();
+            for (var i = 0; i < nodesL.length; i++) {
+                nodeL = nodesL[i];
+                if (Firsttime == 0) {
+                    nodeR = nodesR[rightTreeView.dataSource._view.length - 1];
+                    Firsttime = Firsttime + 1;
+                }
+                else { nodeR = nodesR[i]; }
+                for (var j = 0; j < nodesR.length; j++) {
+                    //debugger;
+                    if (nodeR.key == nodeL.key) {
+                        if (nodeR != undefined) {
+                            if (nodeL.checked) {
+                                nodeR.set("checked", true);
+                                checkedNodeList.push(nodeR);
+                            }
+                            if ((nodeL.hasChildren) && (nodeR.hasChildren)) {
+                                childCheckedNodes = getCheckedItemsRight(nodeL.children.view(), nodeR.children.view());
+                                if (childCheckedNodes.length > 0) {
+                                    checkedNodeList = checkedNodeList.concat(childCheckedNodes);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            //debugger;
+            return checkedNodeList;
+        }
+
+        function getCheckedItemsLeft(treeview){
+            var nodes = treeview.dataSource.view();
+            return getCheckedNodesLeft(nodes);
+        }
+
+        function getCheckedNodesLeft(nodes) {
+            var node, childCheckedNodes;
+            var checkedNodes = [];
+
+            for (var i = 0; i < nodes.length; i++) {
+                node = nodes[i]; debugger;
+                if (node.checked) {
+                    var leftNodeSelector = "#caseSummaryNodesAll [data-uid='" + nodes[i].uid + "']";
+                    var dataItem = leftTreeViewData.dataItem(leftNodeSelector);
+                    var dataOnly = dataItem.children.options.data;
+                    rightTreeViewTemp.append(dataOnly);
+                    //checkedNodes.push(node);
+                }
+
+                // to understand recursion, first
+                // you must understand recursion
+                if (node.hasChildren) {
+                    childCheckedNodes = getCheckedNodesLeft(node.children.view());
+                    if (childCheckedNodes.length > 0) {
+                        checkedNodes = checkedNodes.concat(childCheckedNodes);
+                    }
+                }
+
+            }
+
+            return checkedNodes;
+        }    
+        
+
+        $("#caseSummaryRightArrow").click(function () {
+
+            copyNodeLeftToRight();
+            updateCaseSummaryIDs();
+            clearUnselectedRightNode();
+            SaveCaseSummary();
+            
+        });
+
+
+        function SaveCaseSummary() {
+            var treeNodes = $("#caseSummaryNodesSelected").data("kendoTreeView");
+            var data = treeNodes.dataSource.get($("#CaseSummaryIDs").val());
+            var refreshNodeId = data.id;
+            //@Model.TemplateVersionsKey = data.id;
+            document.getElementById('TemplateVersionsKey').value = data.id;
+            var selectprotocoltext = $("#ProtocolKey option:selected").val();
+            //@Model.CopyProtocolKey = selectprotocoltext;
+            document.getElementById('CopyProtocolKey').value = selectprotocoltext;
+            document.getElementById('ProtocolKeyForCurrentVersion').value = @Model.ProtocolKeyForCurrentVersion;
+            //debugger;
+            @*var url = @Model.ProtocolKeyForCurrentVersion+"/?handler=SaveCaseSummary";
+            $.ajax({
+                type: "GET",
+                url: url,
+                data: { ProtocolKey: refreshNodeId },
+                cache: false,
+                dataType: "json",
+                success: function (result) {
+                   // $('.itemActionMenu').hide();
+                   // $('#alertMessage').html('Item deleted successfully!').fadeIn().delay(3000).fadeOut('slow');
+                },
+                error: function (xhr, status, err) {
+                    console.error(url, status, err.toString());
+                }
+            });
+            return false;*@
+        }
+
+        $("#ProtocolKey").change(function () {
+
+            // TODO CS2: get data from HTTP endpoint instead of this hard-coding
+            var selectedProtocol = $(this).val();
+            //debugger;
+            //var selectedProtocolText = $("#ProtocolKey : selected").text();
+            var selectprotocoltext = $("#ProtocolKey option:selected").text();
+            //debugger;
+            BuildJSONTree(selectedProtocol, selectprotocoltext)
+
+        });
+
+        function BuildJSONTree(selectedProtocol, selectprotocoltext) {
+            $.ajax({
+                type: "GET",
+                url: @Model.ProtocolKeyForCurrentVersion+"/?handler=SingleCaseSummary",
+                data: { ProtocolKey: selectedProtocol },
+                contentType: "application/json",
+                dataType: "json",
+                success: function (response) {
+                    //debugger;
+                    if (response != 0) {
+                        //alert("clearAndReloadLeftTreeView");
+                        //alert(selectedProtocolText);
+                        //debugger;
+                        response = response.replace("\t", " ");
+                        var casesummaryobject = JSON.parse(response);
+                        var caseSummaryDetail = new kendo.data.HierarchicalDataSource({
+                            data: casesummaryobject,
+                            schema: {
+                                model: {
+                                    id: "key",
+                                    hasChildren: "hasItems",
+                                    children: "items"
+                                }
+                            }
+
+                        });
+                        clearAndReloadLeftTreeView(caseSummaryDetail);
+                        clearRightTreeView(caseSummaryDetailEmpty);
+                    }
+                    else {
+                        clearAndReloadLeftTreeView(caseSummaryDetailEmpty);
+                        clearRightTreeView(caseSummaryDetailEmpty);
+                        //loadTreeView($('#caseSummaryNodesAll'), caseSummaryDetailEmpty);
+                        //loadTreeView($('#caseSummaryNodesSelected'), caseSummaryDetailSelected);
+                    }
+                },
+                failure: function (response) {
+                    loadTreeView($('#caseSummaryNodesAll'), caseSummaryDetailEmpty)
+                    alert("fail" + response);
+                }
+            });
+
+
+            var caseSummaryDetailPharynx1 = new kendo.data.HierarchicalDataSource({
+                data: [
+                    {
+
+                        "id": "208.100004300_C", "parentId": "", "value": "CASE SUMMARY (Pharynx)", "titleHtml": "CASE SUMMARY (Pharynx)", "hasItems": true, "items": [
+                            { "titleHtml": "SPECIMEN" },
+                            { "titleHtml": "TUMOR" },
+                            { "titleHtml": "MARGINS (Notes E and F)" },
+                            { "titleHtml": "LYMPH NODES (Note H)" },
+                            { "titleHtml": "PATHOLOGIC STAGE CLASSIFICATION (pTNM, AJCC 8th Edition) (Note I)" },
+                            { "titleHtml": "ADDITIONAL FINDINGS (Note O)" },
+                            { "titleHtml": "SPECIAL STUDIES" },
+                            { "titleHtml": "?Comment(s)" },
+                        ]
+                    }
+                ],
+                schema: {
+                    model: {
+                        id: "id",
+                        hasChildren: "hasItems",
+                        children: "items"
+                    }
+                }
+            });
+        }
+
+        $(document).ready(function () {
+        //    $("#caseSummaryNodesAll").kendoTreeView({
+        //        template: kendo.template($("#node-template").html()),
+        //        dataSource: protocol                
+        //    });
+            loadTreeView($('#caseSummaryNodesAll'), caseSummaryDetailEmpty);
+            loadTreeView($('#caseSummaryNodesSelected'), caseSummaryDetailSelected);
+        });
+    </script>
+}

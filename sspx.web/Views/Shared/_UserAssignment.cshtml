@@ -1,0 +1,85 @@
+﻿@model sspx.web.Models.UserAssignmentModel
+@using sspx.web.Services
+@using Microsoft.Extensions.Options
+@inject IOptionsMonitor<PreviewOptions> PreviewOptionsAccessor
+@{
+    var controlId = "ua_" + Model.role;
+}
+<div class="userAssignmentContainer" id="@controlId">
+    <div class="searchContainer">
+        <div class="title">@Model.title  <i class="fas fa-search"></i></div>
+        <div class="searchResult" style="display:none">
+            <input class="searchName" type="text" placeholder="Enter Name" />
+            <div class="searchUser"></div>
+        </div>
+    </div>
+    <div class="userContainer"></div>
+</div>
+<script>
+    var objUA_@Model.role = null;
+    function UserAssignmentControl (role, controlId) {
+        this.role = role;
+        this.controlId = controlId;
+        this.jqObject = $('#' + controlId);
+        this.stopSearch = false;
+    }
+    UserAssignmentControl.prototype.initUser = function (user) {
+        this.jqObject.find('.userContainer').html('');
+        for (var i = 0; i < user.length; i++) {
+            if (user[i].role === this.role) {
+                var html = "<div class='user' data-id='" + user[i].userId + "'>" + user[i].userName + getUserSymbol(this.role) + "<i class='fas fa-trash-alt'></i></div>";
+                this.jqObject.find('.userContainer').append(html);
+                }
+        }
+    };
+    UserAssignmentControl.prototype.toggleSearch = function () {
+        this.jqObject.find('.searchResult').toggle();
+        this.jqObject.find('.searchResult .searchName').val('');
+        this.jqObject.find('.searchResult .searchUser').html('');
+        this.jqObject.find('.searchResult .searchName').focus();
+
+        if (this.jqObject.find('.searchResult:visible').length > 0) {
+            this.searchUser( this.jqObject.find('.searchResult .searchName') );
+        }
+    };
+    UserAssignmentControl.prototype.removeUser = function (drop) {
+        var user = drop.parent('.user')
+        var userId = user.attr('data-id');
+        user.remove();
+        var oIndex = findindex(allUsers, 'userId', userId);
+        allUsers[oIndex].role = '';
+        setSaveActive();
+    };
+    UserAssignmentControl.prototype.searchUser = function (searchbox) {
+        this.stopSearch = true;
+        var text = searchbox.val();
+        this.jqObject.find('.searchResult .searchUser').html('');
+        text = text.toLowerCase();
+        this.stopSearch = false;
+        for (var i = 0; i < allUsers.length; i++) {
+            if (allUsers[i].role == '' && allUsers[i].searchText.indexOf(text) >= 0 && !this.stopSearch) {
+                var html = "<div class='user' data-id='" + allUsers[i].userId + "'>" + allUsers[i].userName + "</div>";
+                this.jqObject.find('.searchResult .searchUser').append(html);
+            }
+        }
+    };
+    UserAssignmentControl.prototype.addUser = function (user) {
+        var userId = user.attr('data-id');
+        var oIndex = findindex(allUsers, 'userId', userId);
+        this.toggleSearch();
+        var html = "<div class='user' data-id='" + allUsers[oIndex].userId + "'>" + allUsers[oIndex].userName + getUserSymbol(this.role) + "<i class='fas fa-trash-alt'></i></div>";
+        this.jqObject.find('.userContainer').append(html);
+        allUsers[oIndex].role = this.role;
+        setSaveActive();
+    };
+    function getUserSymbol(role) {
+        return role.toLowerCase() == "author" ? "@PreviewOptionsAccessor.CurrentValue.SSPX_AUTHORS_PRIMARY_SYMBOL" : "";
+    }
+    $(document).ready(function () {
+        objUA_@Model.role = new UserAssignmentControl('@Model.role', '@controlId');
+        $('#' + '@controlId').on('click', '.fa-search', function () { (objUA_@Model.role).toggleSearch(); });
+        $('#' + '@controlId').on('click', '.fa-trash-alt', function () { (objUA_@Model.role).removeUser($(this)); });
+        $('#' + '@controlId').on('keyup', '.searchResult .searchName', function () { (objUA_@Model.role).searchUser($(this)); });
+        $('#' + '@controlId').on('click', '.searchResult .searchUser .user', function () { (objUA_@Model.role).addUser($(this)); });
+    });
+</script>

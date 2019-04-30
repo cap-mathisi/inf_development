@@ -1,0 +1,121 @@
+﻿@model sspx.web.Models.ChecklistNoteViewModel
+@{
+    Layout = "~/Views/Shared/_ProtocolLayout.cshtml";
+    var pid = Model.protocolCkey + "_C";
+    var nid = Model.nodeCkey.Replace(".", String.Empty).Replace("_I", String.Empty);
+}
+@section topScripts {
+    <style>
+        #protocolNodes .k-state-selected {
+            background-color: #A3C2A3;
+        }
+
+        #Preview {
+            display: block;
+            border: 1px solid #000000;
+            border-right: none;
+        }
+    </style>
+}
+@section topSection {
+    <div class="topmenu active">Content</div>
+}
+
+@section leftSection {
+    <div class="sectionHeader">Table of Content</div>
+    <div id="protocolNodes"></div>
+}
+
+@section midSection {
+    <div class="sectionHeader">Preview</div>
+    <div id="Preview" class="panel">
+        <iframe id="FullPreview" style="width:100%; height:100%; border: 0"></iframe>
+    </div>
+}
+
+@section rightSection {
+    <div id="commentMenu" class="sectionHeader">Comments <span class="badge">@Model.comments.Count</span></div>
+    <div class="panelSection">
+        @Html.Partial("_Comments", Model)
+    </div>
+}
+
+@section bottomContent {
+    <style>
+        #protocolNodes .k-item .k-in {
+            width: 93%;
+            white-space: normal;
+            padding: 3px !important;
+        }
+    </style>
+    <script id="node-template" type="text/kendo-ui-template">
+        <span class='#= getIconClass(true, item.itemType) #'></span>
+        #= item.titleHtml #
+        # if (item.noteNumber && item.noteNumber.length > 0) { # :
+        # for (var i = 0; i < item.noteNumber.length; i++) { #
+        <a href="javascript:goToNote('EN-#= item.noteNumber[i] #')">#= item.noteNumber[i] #</a>
+        # } #
+        # } #
+        # if (item.commentCount > 0) { #
+        <span class='badge'>#= item.commentCount #</span>
+        # } #
+    </script>
+    <script src="~/js/sspx/SSPxProtocol.js"></script>
+    <script type="text/javascript">
+        var currentVersion = '';
+        var currentNode = '';
+        var firstLoad = true;
+        var protocolCKey = '@Model.protocolCkey';
+        var protocol = new kendo.data.HierarchicalDataSource({
+            transport: {
+                read: {
+                    url: "../SSPxItem/@pid/children?view=full",
+                    dataType: "json"
+                }
+            },
+            schema: {
+                model: {
+                    id: "id",
+                    hasChildren: "hasItems"
+                }
+            }
+        });
+
+        function getNode(e) {
+            var item = this.dataItem(e.node);
+            if (item.id.indexOf("_I") > 1) {
+                currentNode = item.id;
+                document.getElementById("FullPreview").contentWindow.hightlightNode(currentNode);
+                $('#Comment .addMeta').show();
+            } else if (item.id.indexOf("_F") > 0) {
+                currentNode = item.id;
+                document.getElementById("FullPreview").contentWindow.hightlightNode(currentNode);
+                $('#Comment .addMeta').show();
+            }
+            commentObject.setCurrentNode(currentNode);
+            commentObject.refreshComment();
+        }
+
+        function goToNote(noteNo) {
+            document.getElementById("FullPreview").contentWindow.hightlightNode(noteNo);
+        }
+
+        $(document).ready(function () {
+            $("#protocolNodes").kendoTreeView({
+                template: kendo.template($("#node-template").html()),
+                dataSource: protocol,
+                select: getNode,
+                dataBound: function (e) {
+                    if (firstLoad) {
+                        $('#col2 #Preview #FullPreview').attr('src', '../SSPxProtocolPreview/' + protocolCKey + '_P?view=full');
+                        firstLoad = false;
+                    }
+                }
+            });
+        });
+
+        function setMetaSaveActive() {
+            $('#EditMetaData #EditButton').removeAttr('disabled');
+        }
+    </script>
+}

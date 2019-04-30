@@ -1,0 +1,72 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SSPx Prototype</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <partial name="_StylesScriptsPartial" />
+    <partial name="_KendoStylesScripts" />
+    <link rel="stylesheet" href="~/css/sspx/sspxprotocol_responsive.css?v=20190108">
+    <style>
+        .k-editor-toolbar .k-button-group .k-tool {
+            width: 28px !important;
+            height: 28px !important;
+            line-height: 28px !important;
+        }
+    </style>
+    @RenderSection("topScripts", required: false)
+    <partial name="_StyleOverridesLinkLast" />
+</head>
+<body>
+    @await Component.InvokeAsync("NavMenu")
+    @*
+        TODO: if we want cookie consent popup, uncomment and get this to show up correctly (right now it's a weird small button)
+        <partial name="_CookieConsentPartial" />
+    *@
+    <div class="container-fluid protocolEditorText">
+        <div id="topSection" class="row" style="width:100%">
+            @RenderSection("topSection", required: false)
+        </div>
+        <div class="row">
+            <div id="col1" class="col-xs-12 col-sm-5 col-md-3 col-lg-3" style="padding-right: 0px">
+                @RenderSection("leftSection", required: false)
+            </div>
+            <div id="col2" class="col-xs-12 col-sm-7 col-md-5 col-lg-5" style="padding: 0px">
+                @RenderSection("midSection", required: false)
+            </div>
+            <div id="col3" class="col-xs-12 col-sm-12 col-md-4 col-lg-4" style="padding-left: 0px">
+                @RenderSection("rightSection", required: false)
+            </div>
+        </div>
+    </div>
+    <partial name="_FooterPartial" />
+    @RenderSection("bottomContent", required: false)
+    <script>
+        var appHeight = 0;
+        $('document').ready(function () {
+            resizeContainer();
+        });
+        $(window).resize(function () {
+            resizeContainer();
+        });
+        function resizeContainer() {
+            var windowHeight = window.innerHeight;
+            appHeight = windowHeight;
+            if (windowHeight) {
+                var maxHeight = windowHeight - 125;
+                appHeight = maxHeight;
+                if (maxHeight > 600) {
+                    var height = maxHeight + 'px';
+                    var col1Height = (maxHeight - 30) + 'px';
+                    $('#protocolNodes').css('height', col1Height);
+                    $('#protocolNotes').css('height', col1Height);
+                    $('.contentArea').css('height', height);
+                    $('.panel').css('height', (maxHeight - 2) + 'px');
+                    $('.panelSection').css('height', height);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

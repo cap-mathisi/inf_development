@@ -1,0 +1,99 @@
+﻿@page
+@model sspx.web.Areas.Protocols.Pages.PermissionsDemoModel
+@{
+    ViewData["Title"] = string.Format("Permissions demo page");
+}
+
+<h3>@ViewData["Title"]</h3>
+
+<h3>Permissions for current user (UserKey=@Model.UserKey)</h3>
+
+<div>
+    Based on the global release state from <strong>latest version</strong> of protocol, and roles for <strong>all versions</strong> of protocol.
+</div>
+
+<hr />
+
+<p>
+    <strong>
+        ALL permissions BYPASSED with <i>SSPX_PERMISSIONS_BYPASS_ALL</i>?
+        @if (Model.PermissionsBypassEnabled)
+        {
+            <span class="text-danger">true</span>
+        }
+        else
+        {
+            <span class="text-success">false</span>
+        }
+    </strong>
+</p>
+
+
+<strong>USER-level:</strong>
+
+<ul>
+    <li>
+        permission to view this page?
+        @if (Model.HasPagePermission)
+        {
+            <span class="text-success">true</span>
+        }
+        else
+        {
+            <span class="text-danger">false (we would redirect now)</span>
+        }
+    </li>
+    <li>
+        Admin menu access? <span class="text-info">@Model.AdminMenuAccess</span>
+    </li>
+</ul>
+
+
+<strong>PROTOCOL (or protocol version.. TBD)-level:</strong>
+
+<ul>
+    <li>
+        Permission to Edit Breast Protocol (ProtocolsKey=5)?
+        @if (Model.CanEditBreast)
+        {
+            <span class="text-success">true</span>
+        }
+        else
+        {
+            <span class="text-danger">false</span>
+        }
+    </li>
+    <li>
+        Permission to View Breast Protocol (ProtocolsKey=5)?
+        @if (Model.CanViewBreast)
+        {
+            <span class="text-success">true</span>
+        }
+        else
+        {
+            <span class="text-danger">false</span>
+        }
+    </li>
+    <li>
+        Permission to Edit Urethra (ProtocolsKey=52)?
+        @if (Model.CanEditUrethra)
+        {
+            <span class="text-success">true</span>
+        }
+        else
+        {
+            <span class="text-danger">false</span>
+        }
+    </li>
+    <li>
+        Permission to View Urethra (ProtocolsKey=52)?
+        @if (Model.CanViewUrethra)
+        {
+            <span class="text-success">true</span>
+        }
+        else
+        {
+            <span class="text-danger">false</span>
+        }
+    </li>
+</ul>

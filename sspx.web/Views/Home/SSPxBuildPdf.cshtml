@@ -1,0 +1,85 @@
+﻿@model String
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Protocol</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <partial name="_KendoStylesScripts" />
+    <!-- Load Pako ZLIB library to enable PDF compression -->
+    <script src="https://kendo.cdn.telerik.com/2017.3.913/js/pako_deflate.min.js"></script>
+    @* CS2. exclude site UI overrides so they don't affect PDF styling. <partial name="_StyleOverridesLinkLast" />*@
+</head>
+<body>
+    <div>
+        <span id="alertMessage" role="alert" style="font-family:Arial;font-size:16px;">
+            Generating PDF...
+        </span>
+    </div>
+    <div style="height:1px;overflow:hidden" id="PreviewProtocol">
+        <div id="Preview"></div>
+    </div>
+    <script>
+        function getProtocolHtml(protocolKey,pdf) {
+            
+            var url = '../../OutputHtml/' + protocolKey + '_P?view=full/'+pdf;
+
+            return $.ajax({
+                type: "GET",
+                url: url,
+                cache: false,
+                dataType: "html",
+                success: function (result) {
+                    
+                    $('#alertMessage').hide();
+                    document.getElementById("PreviewProtocol").style.overflow = "visible";
+                    //$('#PreviewProtocol').show();
+                    //$('#Preview').html("<div style=\"width: 8.5in\">" + result + "</div>");
+                  
+                    $('#Preview').html(result);     
+                },
+                error: function (xhr, status, err) {
+                    console.error(url, status, err.toString());
+                }
+            });
+        }
+
+        function drawPDF(data, textStatus, jqXHR) {
+
+            // Convert the DOM element to a drawing using kendo.drawing.drawDOM
+            return kendo.drawing.drawDOM($("#Preview"))
+                .then(function (group) {
+                    // Render the result as a PDF file
+                    return kendo.drawing.exportPDF(group, {
+                        //paperSize: "Letter",
+                        margin: { left: "1cm", top: "1cm", right: "1cm", bottom: "1cm" }
+                        // scale: 0.8
+                    });
+                });
+        }
+
+        function openPDF(data, textStatus, jqXHR) {
+
+            // Save the PDF file
+            return kendo.saveAs({
+                dataURI: data,
+                // fileName: "Protocol.pdf", // must omit fileName parameter to show in browser rather than download
+                proxyURL: "../../OutputPdf/Protocol.pdf",
+                forceProxy: true
+            });
+        }
+
+        $(document).ready(function () {
+            
+            getProtocolHtml(@Model,"")
+                .then(drawPDF)
+                .then(openPDF);
+        });
+    </script>
+</body>
+</html>

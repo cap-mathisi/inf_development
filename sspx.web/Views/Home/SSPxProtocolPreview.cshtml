@@ -1,0 +1,214 @@
+﻿@using sspx.core.entities
+@using sspx.web.Models
+@using sspx.web.Services
+@using Microsoft.Extensions.Options
+@inject IOptionsMonitor<PreviewOptions> PreviewOptionsAccessor
+@model ChecklistPreviewViewModel
+@{
+    var nid = Model.nodeCkey;
+    var view = Model.view;
+    Layout = null;
+    var baseUrl = "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SSPx Protocol Preview</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <style>
+
+        body {
+            font-family: Arial;
+            font-size: 12px;
+            margin: 20px;
+            line-height: 22px;
+        }
+
+        #Preview .itemType4, #Preview .itemType17, #Preview .itemType23, #Preview .itemType24 {
+            font-weight: 600;
+            margin-top: 13px;
+        }
+
+        #Preview .itemType24 {
+            border-bottom: 1px solid #000000;
+            font-size: 14px;
+            margin-top: 18px;
+        }
+
+        #Preview .highlight {
+            background-color: #A3C2A3;
+            font-style: italic;
+        }
+
+        #Preview .title, #Preview .section, #Preview .subtitle {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #Preview .section {
+            font-size: 16px;
+            margin-top: 20px;
+        }
+    </style>
+    <script>
+        var currentNode = '';
+        function hightlightNode(nodeId) {
+            if (nodeId.substr(0, 3) !== 'EN-') {
+                nodeId = nodeId.replace(/[_I.]/g, '');
+            }
+            if (currentNode != nodeId) {
+                if (currentNode != '') { $('#' + currentNode).removeClass('highlight'); }
+                var node = $('#' + nodeId);
+                if (node.length > 0) {
+                    var parentHeight = $(window).height() - 30;
+                    node.addClass('highlight');
+                    var scrollto = node.offset().top - (parentHeight / 2);
+                    $('html, body').animate({ scrollTop: scrollto }, 'slow');
+                    currentNode = nodeId;
+                }
+            }
+        }
+    </script>
+</head>
+<body id="Preview">
+    <div style="text-align-last: right">
+        @{
+            if (ViewBag.ProtocolView == "pdf")
+            {
+                <a asp-route="SSPxBuildPdf" asp-route-pid="@ViewBag.ProtocolId" class="small"> <span>PDF Download</span></a>
+
+            }
+            else if (ViewBag.ProtocolView == "word")
+            {
+                <a asp-route="SSPxBuildMSWord" asp-route-pid="@ViewBag.ProtocolId" class="small"> <span>Word Download</span></a>
+            }
+        }
+    </div>
+    @{
+        if (Model.version != null)
+        {
+            <div class="title" id="1F">@Html.Raw(Model.version.title)</div>
+            <div class="cover" id="2F">@Html.Raw(Model.version.cover)</div>
+            <div class="section" id="3F">Authors</div>
+            foreach (var user in Model.version.users)
+            {
+                var name = String.Format("{0} {1}. {2}, {3}{4}; ", user.firstName, user.middleName, user.lastName, user.qualification,
+                     user.role.Equals("author", StringComparison.OrdinalIgnoreCase) ? PreviewOptionsAccessor.CurrentValue.SSPX_AUTHORS_PRIMARY_SYMBOL : String.Empty);
+                @Html.Raw(name)
+            }
+            <p></p>
+            @Html.Raw(PreviewOptionsAccessor.CurrentValue.SSPX_AUTHORS_FOOTER)
+        }
+        String ConvertToPreviewHtml(ChecklistItemNode nodeData, Boolean parentRequired)
+        {
+            if (nodeData.hidden)
+            {
+                return String.Empty;
+            }
+            var itemType = nodeData.itemType;
+            var iClass = "itemType" + itemType.ToString();
+            var prefix = String.Empty;
+            var suffix = String.Empty;
+            if (itemType == 6 || itemType == 20)
+            {
+                prefix = "___ ";
+            }
+            if (!nodeData.required && (itemType == 4 || itemType == 17 || itemType == 23))
+            {
+                prefix = "+ " + prefix;
+            }
+            if (!parentRequired && (itemType == 6 || itemType == 20))
+            {
+                prefix = "+ " + prefix;
+            }
+            if (itemType == 17 || itemType == 20)
+            {
+                suffix = ": _________________";
+            }
+            var text = nodeData.titleHtml;
+            if (text.Contains("Additional dimensions (repeat section if more than one part)", StringComparison.OrdinalIgnoreCase))
+            {
+                return String.Empty;
+            }
+            if (text.ToLower().Equals("not specified") || text.Equals("Cannot be determined")
+                || text.Contains("not identified", StringComparison.OrdinalIgnoreCase)
+                || text.Contains("not applicable", StringComparison.OrdinalIgnoreCase)
+                || text.Contains("indeterminate", StringComparison.OrdinalIgnoreCase))
+            {
+                suffix = String.Empty;
+            }
+            if (text.StartsWith("?"))
+            {
+                text = text.Replace("?", String.Empty);
+            }
+            if (text.Contains("additional dimension", StringComparison.OrdinalIgnoreCase))
+            {
+                suffix = ": ____ x ____";
+            }
+            var id = nodeData.id.Replace(".", "");
+            var condition = String.Empty;
+            if (!String.IsNullOrWhiteSpace(nodeData.condition))
+            {
+                condition = $"<br/><i>({nodeData.condition})</i> ";
+            }
+            var html = $"<div class='{iClass}' id='{id}'>{prefix}{text}{condition}{suffix}</div>";
+            var children = Model.items.FindAll(i => i.parentId == nodeData.id);
+            if (children.Count > 0)
+            {
+                for (var i = 0; i < children.Count; i++)
+                {
+                    html += ConvertToPreviewHtml(children[i], nodeData.required);
+                }
+            }
+            return html;
+        }
+
+        var topNodes = Model.items.FindAll(i => i.parentId == "0");
+        foreach (var node in topNodes)
+        {
+            var nodeHtml = ConvertToPreviewHtml(node, false);
+            @Html.Raw(nodeHtml);
+        }
+
+        if (view == "full")
+        {
+            if (Model.notes.Count > 0)
+            {
+                @Html.Raw("<div class='section' id='5F'>Explanatory Notes</div>")
+                foreach (var note in Model.notes)
+                {
+                    <div class='subtitle' id="EN-@note.number">@note.number. @Html.Raw(note.title)</div>
+                    @Html.Raw(note.details)
+                    if (Model.references.Count > 0)
+                    {
+                        <div class='section' id='6F'>References</div>
+                        <ol>
+                            @foreach (var reference in Model.references.Where(i => i.key == Convert.ToInt32(note.key)))
+                            {
+                                <li>@Html.Raw(reference.reference)</li>
+                            }
+                        </ol>
+                    }
+                }
+            }
+            @*if (Model.references.Count > 0)
+                {
+                    <div class='section' id='6F'>References</div>
+                    <ol>
+                        @foreach (var reference in Model.references)
+                        {
+                            <li>@Html.Raw(reference.reference)</li>
+                        }
+                    </ol>
+                }*@
+        }
+    }
+    <script>
+        $(document).ready(function () {
+            hightlightNode('@nid');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+﻿@page
+@model sspx.Areas.Dashboard.Pages.IndexModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject sspx.web.Services.IProtocolPermissions ProtocolPermissions
+@{
+    ViewData["Title"] = $"Dashboard";
+}
+
+@section TopScripts{
+    <partial name="_KendoStylesScripts" />
+}
+
+<div class="row">
+    <div class="col-xl-4 col-md-6">
+        <div class="border p-3 m-2">
+            <h6 class="text-uppercase">Protocol To-Do List</h6>
+            <div class="row">
+                <div class="col-4">
+                    <div class="demo-section k-content wide">
+                        <div id="protocolToDonut" style="width:200px; height:200px"></div>
+                    </div>
+                </div>
+                <div class="col-8">
+                    <ul>
+                        @foreach (var protocol in Model.ProtocolToDoList.Items)
+                        {
+                            @* TODO CS2: move this logic out of view *@
+                            @if (ProtocolPermissions.HasPermission(Model.UserKey, protocol.ProtocolKey, sspx.core.entities.ProtocolPermissionTypes.EditProtocol))
+                            {
+                                <li>
+                                    <a asp-route="SSPxProtocol" asp-route-pid="@protocol.ProtocolKey">@protocol.ProtocolName</a>
+                                    <span>|</span>
+                                    <span>TBD: due date</span>
+                                </li>
+                            }
+                            else if (ProtocolPermissions.HasPermission(Model.UserKey, protocol.ProtocolKey, sspx.core.entities.ProtocolPermissionTypes.View))
+                            {
+                                <li>
+                                    <a asp-route="SSPxProtocolReader" asp-route-vid="@protocol.ProtocolKey">@protocol.ProtocolName</a>
+                                    <span>|</span>
+                                    <span>TBD: due date</span>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+        <div class="border p-3 m-2">
+            <h6 class="text-uppercase">My Protocols</h6>
+            <div class="row">
+                <div class="col-4">
+                    <div class="demo-section k-content wide">
+                        <div id="myProtocolsDonut" style="width:200px; height:200px"></div>
+                    </div>
+                </div>
+                <div class="col-8">
+                    <ul>
+                        <li>
+                            <a asp-area="Protocols" asp-page="MyProtocols" asp-fragment="author">
+                                Primary Author
+                                @Model.MyProtocols.PrimaryAuthorCount
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-area="Protocols" asp-page="MyProtocols" asp-fragment="reviewer">
+                                Reviewer
+                                @Model.MyProtocols.ReviewerPanelCount
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row d-flex justify-content-end mr-2">
+                <a asp-area="Protocols" asp-page="MyProtocols" class="text-uppercase">Go to My Protocols</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+        <div class="p-3 m-2">
+            <div class="row">
+                <div class="col-4 text-muted text-center">
+                    Welcome
+                </div>
+                <div class="col-8"></div>
+            </div>
+            <div class="row">
+                <div class="col-4 text-center bg-light py-1">
+                    <h1>@Model.ProtocolCount</h1>
+                    <div class="text-uppercase">Protocols</div>
+                </div>
+                <div class="col-8 d-flex align-items-end pb-1">
+                    <a asp-area="Protocols" asp-page="AllProtocols" class="text-uppercase small">View All Protocols</a>
+                </div>
+                @*<h6 class="text-center mt-3 pb-4"><a asp-area="Workflow" asp-page="/AssignReviewer/AssignReviewer">Assign Reviewer</a></h6>*@
+            </div>
+            </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xl-4 col-md-6">
+        <div class="border p-3 my-3">
+            <h6>Activity Stream</h6>
+            <div>OUT OF SCOPE, &gt; MVP</div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+        <div class="border p-3 my-3">
+            <h6>Request Access</h6>
+            <div>
+                <small>
+                If you are interested in a participating in a protocol, use the form below to request access
+                </small>
+            </div>
+            <div class="mt-3">
+                <button type="button" disabled class="btn btn-sm btn-primary rounded-0">Request Access (OUT OF SCOPE, &gt; MVP)</button>
+            </div>
+        </div>
+        <div class="border p-3 my-3">
+            <h6 class="pb-2">Help Resources</h6>
+            <div class="py-1"><a asp-area="Help" asp-page="Introduction">An Introduction to SSP</a></div>
+            <div class="py-1"><a asp-area="Help" asp-page="FAQ">FAQs</a></div>
+            <div class="py-1"><a asp-area="Help" asp-page="Webinar">Webinar</a></div>
+            <div class="py-1"><a asp-area="Help" asp-page="UserGuide">User Guide</a></div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6"></div>
+</div>
+
+@section BottomScripts{
+    <script id="legend-template" type="text/kendo-ui-template">
+        #= category #: #= value #
+    </script>
+
+    <script type="text/javascript">
+        function createChart() {
+            $("#myProtocolsDonut").kendoChart({
+                legend: {
+                    visible: false
+                    // TODO CS2
+                    //template: kendo.template($("#legend-template").html())
+                },
+                chartArea: {
+                    margin: {left: -50}
+                },
+                seriesDefaults: {
+                    type: "donut",
+                    startAngle: 150,
+                    visual: function (e) {
+                        // Obtain parameters for the segments
+                        // Will run many times, but that's not an issue
+                        center = e.center;
+                        radius = e.radius;
+
+                        // Create default visual
+                        return e.createVisual();
+                    },
+                },
+                series: [{
+                    name: "My Protocols",
+                    data: [{
+                        category: "Primary Author",
+                        value: @Model.MyProtocols.PrimaryAuthorCount,
+                        color: "#b2d385"
+                    }, {
+                        category: "Reviewer",
+                        value: @Model.MyProtocols.ReviewerPanelCount,
+                        color: "#f0a79c"
+                    }],
+                }],
+                tooltip: {
+                    visible: true,
+                    template: "#= category #: #= value #"
+                },
+                render: function (e) {
+                    var draw = kendo.drawing;
+                    var geom = kendo.geometry;
+                    var chart = e.sender;
+
+                    // The center and radius are populated by now.
+                    // We can ask a circle geometry to calculate the bounding rectangle for us.
+                    //
+                    // http://docs.telerik.com/kendo-ui/api/javascript/geometry/circle/methods/bbox
+                    var circleGeometry = new geom.Circle(center, radius);
+                    var bbox = circleGeometry.bbox();
+
+                    // Render the text
+                    //
+                    // http://docs.telerik.com/kendo-ui/api/javascript/dataviz/drawing/text
+                    var text = new draw.Text("@Model.MyProtocols.AllProtocolsCount", [0, 0], {
+                        font: "36px Verdana,Arial,sans-serif"
+                    });
+
+                    // Align the text in the bounding box
+                    //
+                    // http://docs.telerik.com/kendo-ui/api/javascript/drawing/methods/align
+                    // http://docs.telerik.com/kendo-ui/api/javascript/drawing/methods/vAlign
+                    draw.align([text], bbox, "center");
+                    draw.vAlign([text], bbox, "center");
+
+                    // Draw it on the Chart drawing surface
+                    e.sender.surface.draw(text);
+                }
+            });
+
+            $("#protocolToDonut").kendoChart({
+                legend: {
+                    visible: false
+                    // TODO CS2
+                    //template: kendo.template($("#legend-template").html())
+                },
+                chartArea: {
+                    margin: { left: -50 }
+                },
+                seriesDefaults: {
+                    type: "donut",
+                    startAngle: 150,
+                    visual: function (e) {
+                        // Obtain parameters for the segments
+                        // Will run many times, but that's not an issue
+                        center = e.center;
+                        radius = e.radius;
+
+                        // Create default visual
+                        return e.createVisual();
+                    },
+                },
+                // TODO CS2: for Phase 2, use actual done / overdue numbers
+                series: [{
+                    name: "Protocol To-Do",
+                    data: [{
+                        category: "Done",
+                        value: @(Model.ProtocolToDoList.AllProtocolsCount - 1),
+                        color: "#b2d385"
+                    }, {
+                        category: "Overdue",
+                        value: @(1),
+                        color: "#f0a79c"
+                    }],
+                }],
+                tooltip: {
+                    visible: true,
+                    template: "#= category #: #= value #"
+                },
+                render: function (e) {
+                    var draw = kendo.drawing;
+                    var geom = kendo.geometry;
+                    var chart = e.sender;
+
+                    // The center and radius are populated by now.
+                    // We can ask a circle geometry to calculate the bounding rectangle for us.
+                    //
+                    // http://docs.telerik.com/kendo-ui/api/javascript/geometry/circle/methods/bbox
+                    var circleGeometry = new geom.Circle(center, radius);
+                    var bbox = circleGeometry.bbox();
+
+                    // Render the text
+                    //
+                    // http://docs.telerik.com/kendo-ui/api/javascript/dataviz/drawing/text
+                    var text = new draw.Text("@Model.ProtocolToDoList.AllProtocolsCount", [0, 0], {
+                        font: "36px Verdana,Arial,sans-serif"
+                    });
+
+                    // Align the text in the bounding box
+                    //
+                    // http://docs.telerik.com/kendo-ui/api/javascript/drawing/methods/align
+                    // http://docs.telerik.com/kendo-ui/api/javascript/drawing/methods/vAlign
+                    draw.align([text], bbox, "center");
+                    draw.vAlign([text], bbox, "center");
+
+                    // Draw it on the Chart drawing surface
+                    e.sender.surface.draw(text);
+                }
+            });
+
+        }
+
+        $(document).ready(createChart);
+        $(document).bind("kendo:skinChange", createChart);
+    </script>
+}

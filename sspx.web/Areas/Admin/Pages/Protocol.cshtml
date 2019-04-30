@@ -1,0 +1,141 @@
+﻿@page "{protocolKey:int?}"
+@namespace sspx.Areas.Admin.Pages
+@model ProtocolPageModel
+@using sspx.Areas.Admin.data
+@using sspx.core.entities
+@using sspx.web.Helpers;
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    var pageLoadingWithoutModel = (Model.ProtocolsWithGroupsSearchModel == null);
+    if (pageLoadingWithoutModel == true)
+    {
+        var searchModelBackup = HttpContext.Session.Get<SearchModel>("protocolsWithGroupsSearchModel");
+        if (searchModelBackup != null)
+        {
+            Model.ProtocolsWithGroupsSearchModel = searchModelBackup;
+        }
+    }
+
+    ViewData["Title"] = Model.Title;
+}
+
+@section TopScripts{
+    <partial name="_KendoStylesScripts" />
+}
+
+@section leftSection {
+    <partial name="_Search" for="ProtocolsWithGroupsSearchModel" />
+}
+
+@section mainSection {
+    <h5>@Model.Title</h5>
+    @if (string.IsNullOrWhiteSpace(@Model.StatusMessage) == false)
+    {
+        <p class="text-success">@Model.StatusMessage</p>
+    }
+    <div class="btn-group btn-group-sm" role="group">
+        <button type="button" class="btn btn-secondary pr-1">
+            <span>Name</span>
+            <i class="fas fa-chevron-right ml-2 mr-0"></i>
+        </button>
+        <button type="button" class="btn btn-secondary pr-1" disabled>
+            <span>Workflow</span>
+            <i class="fas fa-chevron-right ml-2 mr-0"></i>
+        </button>
+        <button type="button" class="btn btn-secondary pr-1" disabled>
+            <span>Case Summary</span>
+            <i class="fas fa-chevron-right ml-2 mr-0"></i>
+        </button>
+        <button type="button" class="btn btn-secondary pr-1" disabled>
+            <span>Notes &amp; References</span>
+            <i class="fas fa-chevron-right ml-2 mr-0"></i>
+        </button>
+        <button type="button" class="btn btn-secondary pr-1" disabled>
+            <span>Authors</span>
+            <i class="fas fa-chevron-right ml-2 mr-0"></i>
+        </button>
+        <button type="button" class="btn btn-secondary pr-2" disabled>
+            <span>Coverpage</span>
+        </button>
+    </div>
+    <div asp-validation-summary="All" class="text-danger mt-2"></div>
+    <form class="mt-4" method="post">
+        <input type="hidden" asp-for="ProtocolKey" />
+        <input type="hidden" asp-for="ProtocolVersionKey" />
+        <input type="hidden" asp-for="TestProtocol" />
+        <div class="border p-3">
+            <div class="row">
+                <div class="form-group col-md-5">
+                    <label asp-for="ProtocolGroupKey"></label>
+                    <select asp-for="ProtocolGroupKey" class="form-control form-control-sm">
+                        <option value="-1">Select</option>
+                        @foreach (var protocolGroup in Model.ProtocolGroupsForDropDown)
+                        {
+                            <option value="@protocolGroup.ProtocolGroupKey">@protocolGroup.ProtocolGroupName</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group col-md-1"></div>
+                <div class="form-group col-md-5">
+                    <label asp-for="ProtocolName"></label>
+                    <input asp-for="ProtocolName" class="form-control form-control-sm" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-5">
+                    <label asp-for="ProtocolShortName"></label>
+                    <input asp-for="ProtocolShortName" class="form-control form-control-sm" />
+                </div>
+                <div class="form-group col-md-1"></div>
+                <div class="form-group col-md-5">
+                    <label asp-for="ProtocolVersion"></label>
+                    <input asp-for="ProtocolVersion" class="form-control form-control-sm" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-5">
+                    <label asp-for="PublishDate"></label>
+                    <input asp-for="PublishDate" id="datepicker" title="datepicker" class="form-control form-control-sm" style="width: 100%" />
+                </div>
+                <div class="form-group col-md-1"></div>
+                <div class="form-group col-md-5 mt-4">
+                    <label asp-for="Active"></label>
+                    <input type="checkbox" asp-for="Active" />
+                    <span id="activeIndicator"></span>
+                    <!-- TODO: show as button
+                                https://getbootstrap.com/docs/4.0/components/buttons/#checkbox-and-radio-buttons
+                            <div class="btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-secondary active">
+                                <input type="checkbox" checked autocomplete="off"> Checked
+                                </label>
+                            </div>
+
+                            <div class="btn-group-toggle" data-toggle="buttons">
+                                <label class="btn btn-secondary active">
+                                    <input type="checkbox" asp-for="Active" />
+                                </label>
+                            </div>
+                    -->
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <button type="submit" asp-page-handler="Save" class="btn btn-primary btn-sm ml-3 text-uppercase" disabled="@(Model.EditMode == true)">Save &amp; Continue</button>
+            @if (Model.EditMode == true)
+            {
+                <small class="align-self-center ml-4"><a asp-area="Admin" asp-page="Protocol" asp-route-protocolKey="@DefaultValue.Key">Cancel changes</a></small>
+            }
+        </div>
+    </form>
+}
+
+@section BottomScripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            // create DatePicker from input HTML element
+            $("#datepicker").kendoDatePicker();
+        });
+    </script>
+}

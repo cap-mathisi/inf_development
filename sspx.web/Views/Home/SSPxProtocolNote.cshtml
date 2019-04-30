@@ -1,0 +1,1283 @@
+﻿@model sspx.web.Models.ChecklistNoteViewModel
+@{
+    Layout = "~/Views/Shared/_ProtocolLayout.cshtml";
+}
+@section topScripts {
+}
+
+@section topSection {
+    <div id="otherAction" class="itemActionMenu" style="display:none">
+        <div class="mainMenu">
+            <a class="dropdown-item menu addMenu" href="#"><i class="fas fa-plus"></i>  ADD <span><i class="fas fa-angle-right"></i></span></a>
+            <a class="dropdown-item menu moveMenu" href="#"><i class="fas fa-arrows-alt"></i>  MOVE <span><i class="fas fa-angle-right"></i></span></a>
+            <a class="dropdown-item" href="#"><i class="fas fa-pencil-alt"></i>  RENAME</a>
+            <a class="dropdown-item" href="#" onclick="return deleteNote()"><i class="fas fa-trash-alt"></i>  DELETE</a>
+            <a class="dropdown-item" href="#" onclick="return copyNote()"><i class="fas fa-copy"></i>  DUPLICATE</a>
+        </div>
+        <div id="addMenu" class="subMenu" style="display:none;width:130px;">
+            <a class="dropdown-item" href="#" onclick="return addNote(0)"><i class="fas fa-arrow-circle-up"></i>  ABOVE</a>
+            <a class="dropdown-item" href="#" onclick="return addNote(1)"><i class="fas fa-arrow-circle-down"></i>  BELOW</a>
+        </div>
+        <div id="moveMenu" class="subMenu" style="display:none;width:130px;margin-top:30px">
+            <a class="dropdown-item" href="#" onclick="return moveNote(0)"><i class="fas fa-arrow-circle-up"></i>  MOVE UP</a>
+            <a class="dropdown-item" href="#" onclick="return moveNote(1)"><i class="fas fa-arrow-circle-down"></i>  MOVE DOWN</a>
+        </div>
+    </div>
+    <div id="EditMetaData" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New/Edit Comment</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="metaEditor" style="height:300px; width:100%; clear:both" spellcheck="false"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button id="EditButton" type="button" class="btn btn-success" onclick="saveMetaData($(this));" disabled="disabled">Save</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="DeleteMetaData" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Remove Reference from Note</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to remove this?</p>
+                    <div class="data-sample"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="RemoveRef" type="button" class="btn btn-primary" onclick="removeMetaData($(this));">Remove</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="topmenu">Workflow</div>
+    <div class="topmenu"><a href="../sspxprotocol/@Model.protocolCkey">Content</a></div>
+    <div class="topmenu active">Notes & References</div>
+    <div class="topmenu alert alert-success" id="alertMessage" style="display:none; margin-left: 50px; padding: 3px 10px;"></div>
+    <div class="topmenuright" onclick="saveContent(false);">SAVE ALL</div>
+}
+
+@section leftSection {
+    <div class="sectionHeader">Notes</div>
+    <div id="protocolNotes">
+
+    </div>
+}
+
+@section midSection {
+    <div class="sectionHeader" id="newNotes">New Note</div>
+    <div class="contentArea" style="background-color: #A3C2A3; min-height: 600px;">
+        <div class="subHeader">
+            <div id="subText"></div>
+            <span style="float:right"><i class="fas fa-caret-left" style="cursor:pointer;font-size:20px" onclick="goToNode(-1);"></i>&nbsp;&nbsp;<i class="fas fa-caret-right" style="cursor:pointer;font-size:20px" onclick="goToNode(1);"></i></span>
+            <div style="clear:both"></div>
+        </div>
+        <div class="noteInfo">
+            <div class="textLabel" style="padding-top: 0px">Title</div>
+            <input id="nodeTitle" type="text" style="padding: 5px; width: 100%;">
+            <div class="textLabel">Description</div>
+            <textarea id="richEditor" style="height:435px; width:100%; clear:both" spellcheck="false"></textarea>
+        </div>
+    </div>
+}
+
+@section rightSection {
+    <div class="panelmenu active" dataId="noteReference">References</div>
+    <div id="commentMenu" class="panelmenu" dataId="noteComment">Comments <span class="badge"></span></div>
+    <div class="panelSection">
+        <div id="noteReference" class="panel" style="display:block">
+            <div class="addMeta" data-toggle="modal" data-target="#EditMetaData" data-type="R" data-id="0" style="display:none"><i class="fas fa-plus"></i> ADD REFERENCE</div>
+            <div id="referenceSection" class="innerPanel"></div>
+        </div>
+        <div id="noteComment" class="panel">
+            <div class="addMeta" data-toggle="modal" data-target="#EditMetaData" data-type="C" data-id="0" style="display:none"><i class="fas fa-plus"></i> ADD COMMENT</div>
+            <div id="commentSection" class="innerPanel"></div>
+        </div>
+    </div>
+}
+
+@section bottomContent {
+    <script type="text/javascript">
+
+        //if (window.addEventListener) {
+        //    var kkeys = [], konami = "38,38,40,40,37,39,37,39,66,65";
+        //    window.addEventListener("keydown", function (e) {
+        //        kkeys.push(e.keyCode);
+        //        if (kkeys.toString().indexOf(konami) >= 0)
+        //            //alert(1)
+        //            window.location = "http://ejohn.org/apps/hero/";
+        //    }, true);
+        //}
+
+        //(function ($) {
+        //    // Prep our variables
+        //    var keys = [], lastEntry = 0, seq = '8,8';
+        //    // Listen for keydown events
+        //    $(document).keydown(function (e) {
+        //        // Push new key into keys array
+        //        keys.push(e.which);
+        //        // See if we need to respond
+        //        if (keys.toString().indexOf(seq) != -1)
+        //            if (e.timeStamp - lastEntry <= 1000)
+        //                alert(111)
+        //                console.log('Correct keys, in the current time.');
+        //        // Update time of last keydown
+        //        lastEntry = e.timeStamp;
+        //    });
+        //})(jQuery);
+
+        //if (!Array.prototype.indexOf) Array.prototype.indexOf = (function (Object, max, min) {
+        //    "use strict";
+        //    return function indexOf(member, fromIndex) {
+        //        if (this === null || this === undefined) throw TypeError("Array.prototype.indexOf called on null or undefined");
+
+        //        var that = Object(this), Len = that.length >>> 0, i = min(fromIndex | 0, Len);
+        //        if (i < 0) i = max(0, Len + i); else if (i >= Len) return -1;
+
+        //        if (member === void 0) {
+        //            for (; i !== Len; ++i) if (that[i] === void 0 && i in that) return i; // undefined
+        //        } else if (member !== member) {
+        //            for (; i !== Len; ++i) if (that[i] !== that[i]) return i; // NaN
+        //        } else for (; i !== Len; ++i) if (that[i] === member) return i; // all else
+
+        //        return -1; // if the value was not found, then return -1
+        //    };
+        //})(Object, Math.max, Math.min);
+
+        //if (!Array.prototype.indexOf) {
+        //    Array.prototype.indexOf = function (searchElement, fromIndex) {
+
+        //        var k;
+
+        //        // 1. Let o be the result of calling ToObject passing
+        //        //    the this value as the argument.
+        //        if (this == null) {
+        //            throw new TypeError('"this" is null or not defined');
+        //        }
+
+        //        var o = Object(this);
+
+        //        // 2. Let lenValue be the result of calling the Get
+        //        //    internal method of o with the argument "length".
+        //        // 3. Let len be ToUint32(lenValue).
+        //        var len = o.length >>> 0;
+
+        //        // 4. If len is 0, return -1.
+        //        if (len === 0) {
+        //            return -1;
+        //        }
+
+        //        // 5. If argument fromIndex was passed let n be
+        //        //    ToInteger(fromIndex); else let n be 0.
+        //        var n = fromIndex | 0;
+
+        //        // 6. If n >= len, return -1.
+        //        if (n >= len) {
+        //            return -1;
+        //        }
+
+        //        // 7. If n >= 0, then Let k be n.
+        //        // 8. Else, n<0, Let k be len - abs(n).
+        //        //    If k is less than 0, then let k be 0.
+        //        k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+
+        //        // 9. Repeat, while k < len
+        //        while (k < len) {
+        //            // a. Let Pk be ToString(k).
+        //            //   This is implicit for LHS operands of the in operator
+        //            // b. Let kPresent be the result of calling the
+        //            //    HasProperty internal method of o with argument Pk.
+        //            //   This step can be combined with c
+        //            // c. If kPresent is true, then
+        //            //    i.  Let elementK be the result of calling the Get
+        //            //        internal method of o with the argument ToString(k).
+        //            //   ii.  Let same be the result of applying the
+        //            //        Strict Equality Comparison Algorithm to
+        //            //        searchElement and elementK.
+        //            //  iii.  If same is true, return k.
+        //            if (k in o && o[k] === searchElement) {
+        //                return k;
+        //            }
+        //            k++;
+        //        }
+        //        return -1;
+        //    };
+        //}
+
+        var protocolCkey = '@Model.protocolCkey';
+        var nodeKey = 0;
+        var prevNodeKey = 0;
+        var checkSpell = true;
+        var saveContentActive = false;
+        var refs = [], coms = [], refOrder = [], referenceCount;
+        $(document).ready(function () {
+
+            $("#richEditor").kendoEditor({
+                pasteCleanup: {
+                    all: false,
+                    css: false,
+                    keepNewLines: false,
+                    msAllFormatting: false,
+                    msConvertLists: false,
+                    msTags: false,
+                    none: true,
+                    span: false
+                },
+                resizable: {
+                    content: false,
+                    toolbar: false
+                },
+                execute: setSaveActive,
+                keyup: setSaveActive
+            }).getKendoEditor();
+            $("#metaEditor").kendoEditor({
+                pasteCleanup: {
+                    all: false,
+                    css: false,
+                    keepNewLines: false,
+                    msAllFormatting: false,
+                    msConvertLists: false,
+                    msTags: false,
+                    none: true,
+                    span: false
+                },
+                resizable: {
+                    content: false,
+                    toolbar: false
+                },
+                execute: setMetaSaveActive,
+                keyup: setMetaSaveActive
+            }).getKendoEditor();
+        });
+
+        function updateNoteTitle(notes) {
+            var notesHtml = "";
+            var prevKey = '0';
+            if (notes && notes.length > 0) {
+                for (var i = 0; i < notes.length; i++) {
+                    var note = notes[i];
+                    var commentCountHtml = note.commentCount > 0 ? " <span class='badge'>" + note.commentCount + "</span>" : "";
+                    var noteClass = 'NoteTitle';
+                    if (note.key == nodeKey) {
+                        noteClass += ' active';
+                    }
+                    var noteHtml = '<div class="' + noteClass + '" datakey="' + note.key + '" data-id="' + note.number
+                        + '" data-count="' + note.commentCount + '" dataprevkey="' + prevKey + '" > ' + note.number + ' - '
+                        + note.title + commentCountHtml + '<span class="itemMenu">...</span></div>';
+                    notesHtml += noteHtml;
+                    prevKey = note.key;
+                }
+                $('#protocolNotes').html(notesHtml);
+            }
+            else {
+                $('#protocolNotes').html("");
+                $('#col2 .sectionHeader').html('New Note');
+                nodeKey = 0;
+                var newNote = '<a class="dropdown-item" href="#" onclick="CreateNewNote()">';
+                newNote += '<span style="text-decoration:underline;color: #009BBF;font-size: 16px;left: 10px;">Create a New Note</span></a>';
+                $('#protocolNotes').html(newNote);
+            }
+        }
+
+        function saveContent(refreshData) {
+            //alert("sc")
+            //console.log("sc" + saveContentActive);
+            if (saveContentActive) {
+
+                var content = $("#richEditor").data("kendoEditor").value();
+                var title = $('.contentArea #nodeTitle').val();
+                //console.log(title);
+
+                if (title=="") {
+                    title = "New Note";
+                }
+                content = content.replace(/"/g, "'");
+                if (content=="") {
+                    content = "&nbsp;";
+                }
+                //alert(content)
+                //console.log(protocolCkey)
+                var url = "../SSPxItem/" + nodeKey + '/notes';
+                console.log(url)
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    cache: false,
+                    data: { note: content, noteTitle: title, protocolCkey: protocolCkey, refOrder: refOrder.join(',') },
+                    dataType: "json",
+                    success: function (result) {
+                        if (nodeKey === 0) {
+                            //console.log("111")
+                            window.location.href = "../sspxprotocolnote/" + protocolCkey;
+                        } else if (refreshData) {
+
+                            getNote();
+                        } else {
+                            //console.log("333")
+                            var currentNote = $('#protocolNotes div.NoteTitle[datakey="' + nodeKey + '"]');
+                            var noteNumber = currentNote.attr('data-id');
+                            var commentCount = currentNote.attr('data-count');
+                            var ccHtml = commentCount > 0 ? " <span class='badge'>" + commentCount + "</span>" : '';
+                            currentNote.html(noteNumber + ' - ' + title + ccHtml);
+                            $('#alertMessage').html('Item saved successfully!').fadeIn().delay(3000).fadeOut('slow');
+                            //console.log(currentNote);
+                            //console.log(noteNumber)
+
+                        }
+                        setSaveInActive();
+                    },
+                    error: function (xhr, status, err) {
+                        console.error(url, status, err.toString());
+                    }
+                });
+            }
+            return false;
+        }
+
+        function saveMetaData(button) {
+            var id = button.attr('data-id');
+            var type = button.attr('data-type');
+            //alert(id);
+            //alert(type)
+            var metadata = $("#metaEditor").data("kendoEditor").value();
+            //alert(metadata)
+            metadata = metadata.replace(/"/g, "'");
+            var url = (type == 'R') ? "../SSPxItem/" + id + '/noteReference' : "../SSPxItem/" + id + "/noteComment";
+            var data = (type == 'R') ? { noteCkey: noteKey, reference: metadata } : { noteCkey: noteKey, comment: metadata };
+            $.ajax({
+                type: "POST",
+                url: url,
+                cache: false,
+                data: data,
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+                    $('#EditMetaData').modal('hide');
+
+                    if (id != 0) {
+                        updateReferenceTitleinNotes(id, metadata);
+                    }
+
+                    //else {
+                    saveContentActive = true;
+                    saveContent(true);
+                    getNote();
+                    //}
+
+                },
+                error: function (xhr, status, err) {
+                    console.error(url, status, err.toString());
+                }
+            });
+            return false;
+        }
+
+
+
+        function removeMetaData(button) {
+            var id = button.attr('data-id');
+            //alert(id)
+            var type = button.attr('data-type');
+            var url = (type == 'R') ? "../SSPxItem/" + id + '/removeReference' : "../SSPxItem/" + id + "/removeComment";
+            $.ajax({
+                type: "GET",
+                url: url,
+                cache: false,
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+                    $('#DeleteMetaData').modal('hide');
+
+                    //var sttt = 'abcdefghij'
+                    //alert(sttt.substr(-9, 9));
+
+                    if (type == 'R') {
+                        var noteText = $("#richEditor").data("kendoEditor").value();
+                        //alert(noteText);
+                        //alert(noteText.indexOf('class="referenceckey:' + id + '"'))
+                        if (noteText.indexOf('class="referenceckey:' + id + '"') > -1) {
+                            //    alert(noteText.indexOf('class="referenceckey:' + id + '"'))
+                            var segtext = noteText.split('class="referenceckey:' + id + '"');
+                            //alert(segtext.length)
+                            for (var i = 0; i < segtext.length; i++) {
+                                var seg = segtext[i];
+                                //alert(seg)
+                                if (i > 0) {
+                                    //alert("1st")
+                                    seg = seg.substring(seg.indexOf('</a>') + 4)
+                                    //alert(seg.indexOf('</a>'));
+                                    //alert(seg.lastIndexOf('<a href="http://ref/"></a>'));
+                                    //seg = seg.trim();
+                                    var LastChar = seg.slice(-1);
+                                    if (LastChar == ' ')
+                                    {
+                                        LastChar = seg.charAt(seg.length - 2);
+                                        //var LastChar = seg.slice(-2);
+                                        //alert('2' + LastChar + '|');
+                                    }
+
+                                        //alert("LC" + LastChar + '|');
+
+                                    //alert(seg);
+                                    //alert('<a href="' + id + '"');
+                                    //alert(seg.lastIndexOf('<a href="' + id + '"'))
+                                    if ((seg.lastIndexOf('<a href="http://ref/"></a><a href="' + id + '"') > 0 || seg.lastIndexOf('<a href="' + id + '"') > 0) && LastChar == '"') {
+                                        //seg = seg.substring(0, seg.lastIndexOf('<a href="http://ref/"></a>'));
+                                        //alert(seg);
+                                        var position = seg.lastIndexOf('<a href="http://ref/"></a><a href="' + id + '"');
+                                        if (position > -1) {
+                                            //alert("a href");
+                                            seg = seg.substring(0, position);
+                                        }
+                                        else {
+                                            //alert("href id")
+                                            seg = seg.substring(0, seg.lastIndexOf('<a href="' + id + '"'));
+                                        }
+                                    }
+                                    //alert(seg);
+                                }
+                                else {
+                                    //alert("2nd")
+                                    var position = seg.lastIndexOf('<a href="http://ref/"></a>');
+                                    if (position > -1) {
+                                        seg = seg.substring(0, position);
+                                    }
+                                    else {
+                                        seg = seg.substring(0, seg.lastIndexOf('<a href="' + id + '"'));
+                                    }
+
+                                }
+
+                               //alert(seg)
+                                //var hrs = seg.substr(-16, 16);
+                                ////alert(hrs);
+                                ////alert(hrs.indexOf('<a href="') > -1);
+                                //if (hrs.indexOf('<a href="') > -1) {
+                                //    seg = seg.substring(0, seg.lastIndexOf('<a href="'));
+                                //}
+
+                                //alert();
+                                //if (seg[seg.length - 9] == '<a href="') {
+                                //    seg = seg.substring(0, seg.lastIndexOf('<a href="'));
+                                //}
+                                segtext[i] = seg;
+                                //alert(seg);
+
+                            }
+
+                            //alert(segtext);
+
+                            reorderRef(segtext.join(''));
+                        }
+                        saveContentActive = true;
+                        saveContent(true);
+                    }
+
+                    else {
+                        getNote();
+                    }
+                },
+                error: function (xhr, status, err) {
+                    console.error(url, status, err.toString());
+                }
+            });
+            return false;
+        }
+
+        //function removeMetaData(button) {
+        //    var id = button.attr('data-id');
+        //    var type = button.attr('data-type');
+        //    var url = (type == 'R') ? "../SSPxItem/" + id + '/removeReference' : "../SSPxItem/" + id + "/removeComment";
+        //    $.ajax({
+        //        type: "GET",
+        //        url: url,
+        //        cache: false,
+        //        dataType: "json",
+        //        success: function (result) {
+        //            console.log(result);
+        //            $('#DeleteMetaData').modal('hide');
+        //            if (type == 'R') {
+        //                var noteText = $("#richEditor").data("kendoEditor").value();
+        //                var segtext = noteText.split('title="referenceckey:' + id + '"');
+        //                for (var i = 0; i < segtext.length; i++) {
+        //                    var seg = segtext[i];
+        //                    if (i > 0) {
+        //                        seg = seg.substring(seg.indexOf('</a>') + 4)
+        //                    }
+        //                    seg = seg.substring(0, seg.lastIndexOf('<a href="'));
+        //                    segtext[i] = seg;
+        //                }
+        //                reorderRef(segtext.join(''));
+        //                saveContentActive = true;
+        //                saveContent(true);
+        //            } else {
+        //                getNote();
+        //            }
+        //        },
+        //        error: function (xhr, status, err) {
+        //            console.error(url, status, err.toString());
+        //        }
+        //    });
+        //    return false;
+        //}
+
+        function populateReference(references, order) {
+            var refHtml = "";
+            //alert(JSON.stringify(references))
+            //alert(order)
+            for (var i = 0; i < order.length; i++) {
+                var index = findindex(references, 'referenceId', order[i]);
+                var refer = references[index];
+                if (refer) {
+                    if (i == 0) {
+                        title = refer.noteTitle;
+                        refHtml = "<div class='title' id='" + refer.key + "'>" + title + "</div>";
+                    }
+                    refHtml += "<div style='margin-bottom:10px;margin-top:5px'>";
+                    refHtml += "<div class='ReferNumber' datakey='" + refer.referenceId + "' data='" + (i + 1) + "'><a href='http://ref'><sup title='" + refer.reference + "' class='referenceckey:" + refer.referenceId + "' >" + (i + 1) + "</sup></a></div>";
+                    refHtml += "<div class='ReferTitle'>" + refer.reference + "</div>";
+                    refHtml += "<div class='ReferControl'>";
+                    refHtml += "<span data-toggle='modal' data-target='#EditMetaData' data-type='R' data-id='" + refer.referenceId + "'><i class='fas fa-pencil-alt' style='color:#808080'></i></span><br />";
+                    refHtml += "<span data-toggle='modal' data-target='#DeleteMetaData' data-type='R' data-id='" + refer.referenceId + "'><i class='fas fa-times-circle' style='color:red'></i></span>";
+                    refHtml += "</div><div style='clear:both'></div></div>";
+                }
+            }
+            $('#noteReference #referenceSection').html(refHtml);
+        }
+
+        function populateComment(comments) {
+            var comHtml = "";
+            $('#commentMenu .badge').html(comments.length);
+            for (var i = 0; i < comments.length; i++) {
+                var com = comments[i];
+                if (i == 0) {
+                    title = com.title;
+                    comHtml = "<div class='title' id='" + com.key + "'>" + title + "</div>";
+                }
+                comHtml += "<div style='margin-bottom:10px;margin-top:5px'>";
+                comHtml += "<div class='ComName' datakey='" + com.commentId + "'>" + com.firstName.substring(0, 1) + com.lastName.substring(0, 1) + "</div>";
+                comHtml += "<div class='ComTitle'>" + com.firstName + " " + com.lastName.substring(0, 1) + " | " +
+                    com.dateAdded + "<br />" + com.comment + "</div>";
+                comHtml += "<div class='ComControl'>";
+                comHtml += "<span data-toggle='modal' data-target='#EditMetaData' data-type='C' data-id='" + com.commentId + "'><i class='fas fa-pencil-alt' style='color:#808080'></i></span><br />";
+                comHtml += "<span data-toggle='modal' data-target='#DeleteMetaData' data-type='C' data-id='" + com.commentId + "'><i class='fas fa-times-circle' style='color:red'></i></span>";
+                comHtml += "</div><div style='clear:both'></div></div>";
+            }
+            $('#noteComment #commentSection').html(comHtml);
+        }
+
+        function goToNode(dir) {
+            if (nodeKey != 0) {
+                var activeNode = null;
+                if (dir === 1) { // next
+                    activeNode = $('#protocolNotes div.NoteTitle[datakey="' + nodeKey + '"]').next('div.NoteTitle');
+                    if (activeNode.length == 0) {
+                        activeNode = $('#protocolNotes div.NoteTitle').first();
+                    }
+                } else if (dir === -1) { // previous
+                    activeNode = $('#protocolNotes div.NoteTitle[datakey="' + nodeKey + '"]').prev('div.NoteTitle');
+                    if (activeNode.length == 0) {
+                        activeNode = $('#protocolNotes div.NoteTitle').last();
+                    }
+                }
+                if (activeNode && activeNode.length > 0) {
+                    noteClick(activeNode);
+                }
+            }
+        }
+
+        //function function1(param, callback) {
+        //    //...do stuff
+        //    callback();
+        //}
+
+        //function1(someVariable, function () {
+        //    function2(someOtherVariable);
+        //});
+
+        function savenotes() {
+            //alert("sn")
+            saveContent(false);
+            //callback();
+        }
+
+
+        function noteClick1(noteNode) {
+            //console.log("nc")
+            //alert(noteNode)
+            //saveContent(false);
+            nodeKey = noteNode.attr('datakey');
+            //console.log(nodeKey)
+            prevNodeKey = noteNode.attr('dataprevkey');
+            //console.log(prevNodeKey)
+            $('#protocolNotes .NoteTitle').removeClass('active');
+            noteNode.addClass('active');
+            $('#col2 .sectionHeader').html('Edit Note');
+            /*saveContent(false)*/
+            //alert(102)
+            //console.log(nodeKey + " " + prevNodeKey);
+            getNote();
+            //alert(103)
+            //callback();
+            //alert(303);
+            //var content = $("#richEditor").data("kendoEditor").value();
+            //referenceCount = occurrences(content, '<sup>', true);
+            //alert(referenceCount);
+        }
+
+        function noteClick(noteNode) {
+            //alert(101)
+            //saveContent(false);
+            nodeKey = noteNode.attr('datakey');
+            //console.log(nodeKey)
+            prevNodeKey = noteNode.attr('dataprevkey');
+            //console.log(prevNodeKey)
+            $('#protocolNotes .NoteTitle').removeClass('active');
+            noteNode.addClass('active');
+            $('#col2 .sectionHeader').html('Edit Note');
+            /*saveContent(false)*/
+            //alert(202)
+            getNote();
+            //callback();
+            //alert(303);
+            //var content = $("#richEditor").data("kendoEditor").value();
+            //referenceCount = occurrences(content, '<sup>', true);
+            //alert(referenceCount);
+        }
+
+        function getNote() {
+            var url = "../SSPxNote/" + protocolCkey + '/notes/' + nodeKey;
+            $.ajax({
+                type: "GET",
+                url: url,
+                cache: false,
+                dataType: "json",
+                success: function (result) {
+                    //alert(result.notes[0].title);
+                    //alert(result.notes[0].key);
+                    $('.contentArea #subText').html(result.notes[0].title);
+                    $('.contentArea #nodeTitle').val(result.notes[0].title);
+                    noteKey = result.notes[0].key;
+                    //console.log("getnotes")
+                    $("#richEditor").data("kendoEditor").value(result.notes[0].details);
+                    if (checkSpell) {
+                        var editorIframe = $("iframe.k-content").contents();
+                        editorIframe.find("body").attr('spellcheck', 'false');
+                        checkSpell = false;
+                    }
+                    $('.panelSection .addMeta').show();
+                    refs = result.references;
+                    coms = result.comments;
+                    refOrder = [];
+                    for (var i = 0; i < refs.length; i++) {
+                        refOrder.push(refs[i].referenceId);
+                    }
+                    populateReference(refs, refOrder);
+                    populateComment(coms);
+                    // update comment count badge
+                    var comCount = coms.length;
+                    var nodeHtml = $('#protocolNotes .NoteTitle.active').html();
+                    var start = nodeHtml.indexOf("<span ");
+                    if (start > 0) {
+                        nodeHtml = nodeHtml.substr(0, start);
+                    }
+                    if (comCount > 0) {
+                        nodeHtml += " <span class='badge'>" + comCount + "</span>";
+                    }
+                    nodeHtml += "<span class='itemMenu' style='display:block'>...</span>";
+                    $('#protocolNotes .NoteTitle.active').html(nodeHtml);
+                    $('#protocolNotes .NoteTitle.active').attr('data-count', comCount);
+                    setSaveInActive();
+                    var content = $("#richEditor").data("kendoEditor").value();
+                    referenceCount = occurrences(content, 'class="referenceckey:', true);
+                    //++referenceCount;
+                    //alert(referenceCount);
+                },
+                error: function (xhr, status, err) {
+                    console.error(url, status, err.toString());
+                }
+            });
+            return false;
+        }
+
+        function panelMenu(panel) {
+            $('.panelmenu').removeClass('active');
+            $('.panelSection .panel').css('display', 'none');
+            panel.addClass('active');
+            var activePanel = panel.attr('dataId');
+            $('#' + activePanel).css('display', 'block');
+        }
+
+        function setSaveInActive() {
+            if (saveContentActive) {
+                saveContentActive = false;
+                $('#topSection .topmenuright').removeClass('active');
+            }
+        }
+
+        function findOutDeletedElements() {
+            content = $("#richEditor").data("kendoEditor").value();
+            //alert(content);
+            //alert(iStart)
+
+            var updatedRefCount = occurrences(content, 'class="referenceckey:', true);
+            //alert("OC " + referenceCount + "CC " + updatedRefCount);
+            if (referenceCount > updatedRefCount) {
+                referenceCount = updatedRefCount + 1;
+                //}
+
+                var iStart = content.indexOf('<a href="http://ref/"></a><sup>');
+                if (iStart > -1) {
+                    //alert(2)
+                    var iEnd = content.indexOf('<', iStart + 31);
+                    //alert(iEnd)
+                    var refNo = content.substring(iStart + 31, iEnd);
+                    //alert(refNo);
+                    content = content.replace('<a href="http://ref/"></a><sup>' + refNo + '</sup>', '');
+                }
+
+                reorderRef(content);
+
+                ////Move Caret
+                //var text = $('#richEditor').getKendoEditor().value()
+                ////alert(text)
+                //var strippedText = text.replace(/(<([^>]+)>)/ig, "");
+                //strippedText = strippedText.replace(/&nbsp;/ig, " ");
+                //alert(strippedText);
+                //var editor = $("#richEditor").data("kendoEditor");
+                @*alert(iStart)
+                iStart = iStart - 31;
+                alert(iStart)*@
+                //moveCaret(editor, 10);
+
+
+                //alert(content);
+                //alert(JSON.stringify(refs));
+                //var referenceNo = "";
+                //for (i = 0; i < refOrder.length; i++) {
+                //    if (refNo == refs[i].referenceNumber) {
+                //        referenceNo = refs[i].referenceId;
+                //    }
+                //}
+                //alert(referenceNo)
+
+                //iEnd = content.indexOf('/sup>', iStart);
+                //var Segment = content.substring(iStart, iEnd + 5);
+                //alert(Segment);
+                //reorderRef(content.join(''));
+                //alert("deleted");
+
+                //var occurrenceCount = occurrences(content, '<sup>', true);
+                ////alert(occurrenceCount)
+                //var supList = [];
+                //var i = 0, indexSearch = 0;
+                //for (i = 0; i < occurrenceCount; i++) {
+                //    var supStart = content.indexOf('<sup>', indexSearch);
+                //    //alert("Start" + supStart)
+                //    var supEnd = content.indexOf('<', supStart + 5);
+                //    //alert("End" + supEnd)
+                //    var refNum = content.substring(supStart + 5, supEnd);
+                //    //alert("refNo" + refNum)
+                //    supList.push(refNum)
+                //    indexSearch = supEnd + 6;
+                //}
+                //alert(supList)
+                // alert(iStart)
+
+                //else {
+                //    alert("not deleted")
+                //}
+            }
+        }
+
+        function moveCaret(editor, position) {
+            var range = editor.getRange();
+            if (range.collapsed) {
+                var textNode = editor.body.firstChild;
+                range.setStart(textNode, position);
+                range.collapse(true); // collapse to start
+                editor.selectRange(range);
+            }
+        }
+
+        //function moveCaret(editor, str) {
+        //    var range = editor.getRange();
+        //    if (range.collapsed) {
+        //        var textNode = findNodeOfString(editor.body, str);
+        //        if (textNode !== null) {
+        //            var position = textNode.nodeValue.indexOf(str);
+        //            range.setStart(textNode, position);
+        //        }
+        //        range.collapse(true); // collapse to start
+        //        editor.selectRange(range);
+        //    }
+        //}
+
+        function setSaveActive() {
+            //alert("Sa")
+            findOutDeletedElements();
+            //alert(111)
+            if (!saveContentActive)
+            {
+                saveContentActive = true;
+                $('#topSection .topmenuright').addClass('active');
+            }
+            //alert(saveContentActive)
+        }
+
+        function setMetaSaveActive() {
+            $('#EditMetaData #EditButton').removeAttr('disabled');
+        }
+
+        function findindex(objectArray, keyName, keyValue) {
+            for (var i = 0; i < objectArray.length; i++) {
+                if (keyName != '') {
+                    if (objectArray[i][keyName] == keyValue) {
+                        return i;
+                    }
+                } else {
+                    if (objectArray[i] == keyValue) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        function reorderRef(noteText) {
+            // reorder the reference numbers
+            var refers = [];
+            //var segtext = noteText.split('class="referenceckey:');
+            var segtext = noteText.split('class="referenceckey:');
+            //alert(noteText)
+            for (var i = 1; i < segtext.length; i++) {
+                var seg = segtext[i];
+                //alert(seg);
+                refNo = seg.substr(0, seg.indexOf('"'));
+                //alert(refers)
+                //alert(refNo);
+                var index = findindex(refers, '', refNo);
+                //alert(index);
+                if (index == -1) {
+                    index = refers.length;
+                    refers.push(refNo);
+                }
+                //alert(refers)
+                //alert(index);
+                iStart = seg.indexOf('<sup>');
+                //alert(iStart)
+                iEnd = seg.indexOf('</sup>', iStart);
+                //alert(iEnd)
+                supSeg = seg.substring(iStart, iEnd);
+               // alert(supSeg)
+                segtext[i] = seg.replace(supSeg, '<sup>' + ++index + '</sup>');
+                //alert(segtext[i])
+            }
+            $("#richEditor").data("kendoEditor").value(segtext.join('class="referenceckey:'));
+            refOrder = refers;
+            //alert(JSON.stringify(refOrder));
+            for (var j = 0; j < refs.length; j++) {
+                var ind = findindex(refOrder, '', refs[j].referenceId);
+                //alert(ind);
+                if (ind == -1) {
+                    refOrder.push(refs[j].referenceId);
+                }
+            }
+            //alert(refs);
+            //alert(JSON.stringify(refOrder));
+            populateReference(refs, refOrder);
+        }
+
+        function addRefToNote() {
+
+            var notetext = $("#richEditor").data("kendoEditor").value();
+            //alert(notetext);
+            referenceCount = occurrences(notetext, 'class="referenceckey:', true);
+            //++referenceCount;
+            // reformat the reference number
+            //var st = $.inArray('<sup class="referenceckey:', notetext);
+            //alert(st);
+
+            //var iStart = notetext.indexOf('<sup title=');
+            //var iEnd = notetext.indexOf('"', iStart + 11);
+            //var refNo = notetext.substring(iStart + 11, iEnd);
+            //iEnd = notetext.indexOf('class="referenceckey:', iStart);
+            //var supSeg = notetext.substring(iStart, iEnd + 3);
+            //alert(supSeg)
+
+            //var iStart = notetext.indexOf('<sup class="referenceckey:');
+            var iStart = notetext.indexOf('<sup title="');
+            //alert(iStart)
+            var iEnd = notetext.indexOf('"', iStart + 12);
+            var refNo = notetext.substring(iStart + 12, iEnd);
+            iEnd = notetext.indexOf('</sup>', iStart);
+            var Segment = notetext.substring(iStart, iEnd + 6);
+            //alert(Segment);
+
+            var classStart = Segment.indexOf('class="referenceckey:');
+            var classEnd = Segment.indexOf('"', classStart + 21);
+            var refNo = Segment.substring(classStart + 21, classEnd);
+            //alert(refNo);
+
+            iEnd = notetext.indexOf('</sup>', iStart);
+            var supSeg = notetext.substring(iStart, iEnd + 6);
+            //alert(supSeg)
+            //for (var i = 0; i < refs.length; i++) {
+            //    var index = findindex(references, 'referenceId', order[i]);
+            //    var refer = references[index];
+            //}
+            var referenceName = "";
+            for (i = 0; i < refOrder.length; i++) {
+                if (refNo == refs[i].referenceId) {
+                    referenceName = refs[i].reference;
+                }
+            }
+
+            //alert(JSON.stringify(refs));
+            //alert(referenceName)
+            //alert(refNo)
+            notetext = notetext.replace(supSeg, '<a href="' + refNo + '" title="' + referenceName + '" class="referenceckey:' + refNo + '" ><sup>#</sup></a>');
+            //alert(notetext)
+            reorderRef(notetext);
+            setSaveActive();
+        }
+
+        function updateReferenceTitleinNotes(id, referenceName) {
+            //alert(1)
+            var notetext = $("#richEditor").data("kendoEditor").value();
+            var references = null;
+            for (i = 0; i < refOrder.length; i++) {
+                if (id == refs[i].referenceId) {
+                    references = refs[i].reference;
+                }
+            }
+            //alert(notetext);
+            //alert(references)
+            //alert(referenceName);
+
+            //var searchRef = 'title="' + references;
+            //var count = (notetext.match(/searchRef/g) || []).length;
+            //console.log(count);
+            //alert('5555')
+            var occurrenceCount = occurrences(notetext, 'title="' + references + '"', true);
+            //alert('OC' + occurrenceCount);
+
+            for (i = 0; i < occurrenceCount; i++) {
+                //alert('i' + i);
+                //alert(references);
+                //alert(referenceName);
+                notetext = notetext.replace('title="' + references + '"', 'title="' + referenceName + '"')
+            }
+
+            $("#richEditor").data("kendoEditor").value(notetext);
+            //alert(notetext);
+            //notetext = notetext.replace(supSeg, '<a href="' + id + '" title="' + referenceName + '" class="referenceckey:' + id + '" >');
+        }
+
+        function occurrences(string, subString, allowOverlapping) {
+
+            string += "";
+            subString += "";
+            if (subString.length <= 0) return (string.length + 1);
+
+            var n = 0,
+                pos = 0,
+                step = allowOverlapping ? 1 : subString.length;
+
+            while (true) {
+                pos = string.indexOf(subString, pos);
+                if (pos >= 0) {
+                    ++n;
+                    pos += step;
+                } else break;
+            }
+            return n;
+        }
+
+        function changeDesc(value, desc) {
+            for (var i in projects) {
+                if (projects[i].value == value) {
+                    projects[i].desc = desc;
+                    break; //Stop this loop, we found it!
+                }
+            }
+        }
+
+        $('#EditMetaData').on('show.bs.modal', function (event) {
+            var object = $(event.relatedTarget);
+            var type = object.data('type');
+            var id = object.data('id');
+            var modal = $(this);
+            var title = (id == '0') ? 'Add ' : 'Edit ';
+            title += (type === 'R') ? 'Reference' : 'Comment';
+            modal.find('.modal-title').text(title);
+            if (id != '0') {
+                var data = '';
+                if (type === 'R') {
+                    data = $.grep(refs, function (r) { return r.referenceId == id; });
+                    $("#metaEditor").data("kendoEditor").value(data[0].reference);
+                } else {
+                    data = $.grep(coms, function (c) { return c.commentId == id; });
+                    $("#metaEditor").data("kendoEditor").value(data[0].comment);
+                }
+            } else {
+                $("#metaEditor").data("kendoEditor").value('');
+            }
+            modal.find('#EditButton').attr('data-id', id).attr('data-type', type).attr('disabled', 'disabled');
+        });
+
+        $('#DeleteMetaData').on('show.bs.modal', function (event) {
+            var object = $(event.relatedTarget);
+            var type = object.data('type');
+            var id = object.data('id');
+            var modal = $(this);
+            var title = 'Remove ' + ((type === 'R') ? 'Reference' : 'Comment') + ' from Note';
+            modal.find('.modal-title').text(title);
+            if (type == 'R') {
+                var index = findindex(refs, 'referenceId', id);
+                modal.find('.data-sample').html(refs[index].reference);
+            } else {
+                var index = findindex(coms, 'commentId', id);
+                modal.find('.data-sample').html(coms[index].comment);
+            }
+            modal.find('#RemoveRef').attr('data-id', id).attr('data-type', type);
+        });
+
+        function displayMainMenu(itemNode) {
+            selectedElement = itemNode;
+            var top = itemNode.offset().top;
+            var left = 155;
+            var top2 = top; // not sure why we still have 80 offset to the top??
+            $('#otherAction.itemActionMenu').css('top', top2).css('left', left).show();
+        }
+
+        function displaySubMenu(menuItem) {
+            $('.itemActionMenu .mainMenu .dropdown-item').css('background-color', '');
+            $('.itemActionMenu .subMenu').hide();
+            menuItem.css('background-color', '#D6E1D6');
+            if (menuItem.hasClass('moveMenu')) {
+                $('.itemActionMenu').css('width', '340px');
+                $('.itemActionMenu #moveMenu.subMenu').show();
+            } else if (menuItem.hasClass('addMenu')) {
+                $('.itemActionMenu').css('width', '340px');
+                $('.itemActionMenu #addMenu.subMenu').show();
+            } else {
+                $('.itemActionMenu').css('width', 'auto');
+            }
+        }
+
+        function alterNote(url) {
+            $.ajax({
+                type: "GET",
+                url: url,
+                cache: false,
+                dataType: "json",
+                success: function (result) {
+                    updateNoteTitle(result);
+                    $('#otherAction.itemActionMenu').hide();
+                },
+                error: function (xhr, status, err) {
+                    console.error(url, status, err.toString());
+                }
+            });
+        }
+
+        function clearNoteArea() {
+            $('.contentArea #subText').html('');
+            $('.contentArea #nodeTitle').val('');
+            noteKey = 0;
+            $("#richEditor").data("kendoEditor").value('');
+            populateReference([], []);
+            populateComment([]);
+        }
+
+        function addNote(dir) {
+            var nid = (dir == 0) ? prevNodeKey : nodeKey;
+            var url = "../SSPxNote/" + protocolCkey + '/add/' + nid;
+            alterNote(url);
+            return false;
+        }
+
+        function deleteNote() {
+            var url = "../SSPxNote/" + protocolCkey + '/delete/' + nodeKey;
+            alterNote(url);
+            clearNoteArea();
+            return false;
+        }
+
+        function moveNote(dir) {
+            var noteKey2 = prevNodeKey;
+            if (dir == 1) {
+                var nextNode = $('#protocolNotes .NoteTitle[dataprevkey="' + nodeKey + '"]');
+                if (nextNode) {
+                    noteKey2 = nextNode.attr('datakey');
+                }
+            }
+            if (noteKey2 > 0) {
+                var url = "../SSPxNote/" + protocolCkey + '/move?id=' + nodeKey + '&nid=' + noteKey2;
+                alterNote(url);
+            }
+            return false;
+        }
+
+        function copyNote() {
+            var url = "../SSPxNote/" + protocolCkey + '/copy/' + nodeKey;
+            alterNote(url);
+            return false;
+        }
+
+        function CreateNewNote() {
+            saveContentActive = true;
+            saveContent(false);
+        }
+
+        function check2backspaces() {
+            alert(222)
+            var flag = false;
+            if ((e.keyCode ? e.keyCode : e.which) == 8) {
+                setTimeout(function () { flag = false }, 1000);
+                if (flag) {
+                    flag = false;
+                    alert('backspace twice');
+                }
+                flag = true;
+            } else {
+                flag = false;
+            }
+        }
+
+        $(document).ready(function () {
+
+            //if (window.addEventListener) {
+            //    var kkeys = [], konami = "38,38,40,40,37,39,37,39,66,65";
+            //    window.addEventListener('keydown', function (e) {
+            //        kkeys.push(e.keyCode);
+            //        if (kkeys.toString().indexOf(konami) >= 0)
+            //            window.location = "http://ejohn.org/apps/hero/";
+            //    }, true);
+            //}
+
+            //(function ($) {
+            //    // Prep our variables
+            //    var keys = [], lastEntry = 0, seq = '8,8';
+            //    // Listen for keydown events
+            //    $(document).keydown(function (e) {
+            //        // Push new key into keys array
+            //        keys.push(e.which);
+            //        // See if we need to respond
+            //        if (keys.toString().indexOf(seq) != -1)
+            //            if (e.timeStamp - lastEntry <= 1000)
+            //                alert(11)
+            //                console.log('Correct keys, in the current time.');
+            //        // Update time of last keydown
+            //        lastEntry = e.timeStamp;
+            //    });
+            //})(jQuery);
+
+            //if (!Array.prototype.indexOf) {
+            //    Array.prototype.indexOf = function (elt /*, from*/) {
+            //        var len = this.length >>> 0;
+
+            //        var from = Number(arguments[1]) || 0;
+            //        from = (from < 0)
+            //            ? Math.ceil(from)
+            //            : Math.floor(from);
+            //        if (from < 0)
+            //            from += len;
+
+            //        for (; from < len; from++) {
+            //            if (from in this &&
+            //                this[from] === elt)
+            //                return from;
+            //        }
+            //        return -1;
+            //    };
+            //}
+
+            updateNoteTitle(@Html.Raw(Json.Serialize(Model.notes)));
+            $('.panelmenu').on('click', function () { panelMenu($(this)) });
+            $('.contentArea .noteInfo input').on('keyup', function () {
+                setSaveActive();
+            });
+            $('.contentArea .noteInfo textarea').on('keyup', function () {
+                setSaveActive();
+            });
+            var editor = $("#richEditor").data("kendoEditor");
+            $(editor.body).on('drop', function () { setTimeout(addRefToNote, 100); });
+
+            //$('.contentArea .noteInfo textarea').on('keyup', function (e) {
+            //       check2backspaces()
+            //});
+
+            var initNo = '@Model.nodeCkey';
+            if (initNo !== '') {
+                var noteSelected = $('#protocolNotes .NoteTitle[data-id="' + initNo + '"]');
+                if (noteSelected.length > 0) {
+                    //alert(222)
+                    noteClick(noteSelected);
+                    //noteClick1($(this), function () {
+                    //    savenotes();
+                    //});
+                    //$.when(noteClick1($(this))).then(savenotes());
+                    //$.ajax({
+                    //    url: savenotes(),
+                    //    success: function () {
+                    //        noteClick1(noteSelected);
+                    //    }
+                    //});
+                }
+            }
+
+            $('#protocolNotes').on('click', '.NoteTitle', function () {
+                //alert(222)
+                //saveContent(false);
+
+                //alert(111)
+                //$.when(noteClick1($(this))).then(savenotes());
+
+                //noteClick1($(this), function () {
+                //    savenotes();
+                //});
+                noteClick($(this));
+
+                //$.ajax({
+                //    url: savenotes(),
+                //    success: function () {
+                //        //noteClick1(notes);
+                //    }
+                //});
+                //noteClick1($(this));
+            });
+
+            $('#protocolNotes').on('mouseenter', '.NoteTitle', function () { $(this).find('.itemMenu').show(); });
+            $('#protocolNotes').on('mouseleave', '.NoteTitle', function () { $(this).find('.itemMenu').hide(); });
+            $('#protocolNotes').on('click', '.NoteTitle .itemMenu', function () { displayMainMenu($(this)) });
+            $('body').on('mouseleave', '.itemActionMenu', function () { $(this).hide() });
+            $('#otherAction.itemActionMenu').on('mouseenter', '.mainMenu .dropdown-item', function () { displaySubMenu($(this)) });
+
+
+            //function findNodeOfString(container, str) {
+            //    var nodeIterator = document.createNodeIterator(
+            //        container,
+            //        NodeFilter.SHOW_TEXT,
+            //        function (node) {
+            //            return node.nodeValue.indexOf(str) >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+            //        });
+
+            //    return nodeIterator.nextNode();
+            //}
+        });
+    </script>
+}

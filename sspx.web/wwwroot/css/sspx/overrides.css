@@ -1,0 +1,55 @@
+﻿/* Site-wide overrides. This file should be linked LAST, i.e., after CSS for bootstrap, kendo, etc. */
+
+* {
+    font-family: Arial
+}
+
+
+/* order of link styles is important -- https://developer.mozilla.org/en-US/docs/Learn/CSS/Styling_text/Styling_links#Styling_some_links */
+a {
+    color: #009bbf;
+}
+
+a:link {
+}
+
+a:visited {
+}
+
+a:focus {
+}
+
+a:hover {
+}
+
+a:active {
+}
+
+input, select {
+    border-radius: 0 !important;
+}
+
+.bg-primary {
+    background-color: #009bbf !important;
+}
+
+.btn-primary {
+    background-color: #009bbf;
+    border-color: #009bbf;
+    border-radius: 0;
+}
+
+/* found darker/lighter shades of this courtesy of https://www.w3schools.com/colors/colors_picker.asp    */
+.btn-primary:disabled {
+    background-color: #007d99;
+    border-color: #007d99;
+}
+
+.btn-primary:hover {
+    background-color: #007d99;
+    border-color: #007d99;
+}
+
+.text-secondary {
+    color: #666666 !important;
+}

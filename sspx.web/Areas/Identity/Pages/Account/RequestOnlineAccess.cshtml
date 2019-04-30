@@ -1,0 +1,251 @@
+﻿@page
+@model RequestOnlineAccessModel
+@{
+    ViewData["Title"] = "Request Online Access for SSP";
+}
+
+<form method="post" class="mb-5">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="form-group row">
+        <div class="col-sm-3 text-sm-right">
+            <span class="text-danger mt-1">*</span>
+            <label asp-for="Input.FirstName" class="col-form-label font-weight-bold"></label>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-row">
+                <div class="col">
+                    <input asp-for="Input.FirstName" class="form-control" id="inputUserNameFirst" placeholder="First" />
+                </div>
+                <div class="col">
+                    <input asp-for="Input.MiddleName" class="form-control" id="inputUserNameMiddle" placeholder="Middle" />
+                </div>
+                <div class="col">
+                    <input asp-for="Input.LastName" class="form-control" id="inputUserNameLast" placeholder="Last" />
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row">
+        <div class="col-sm-3 text-sm-right">
+            <span class="text-danger mt-1">*</span>
+            <label asp-for="Input.Email" class="col-form-label font-weight-bold"></label>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-row">
+                <div class="col">
+                    <input asp-for="Input.Email" class="form-control" id="inputEmail" />
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="Input.WorkPhone" class="col-sm-3 col-form-label font-weight-bold text-sm-right"></label>
+        <div class="col-sm-6">
+            <div class="form-row">
+                <div class="col">
+                    <input type="tel" asp-for="Input.WorkPhone" class="form-control" id="inputPhoneWork" />
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="Input.CellPhone" class="col-sm-3 col-form-label font-weight-bold text-sm-right"></label>
+        <div class="col-sm-6">
+            <div class="form-row">
+                <div class="col">
+                    <input type="tel" asp-for="Input.CellPhone" class="form-control" id="inputPhoneCell" />
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-8">
+            <hr />
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row">
+        <div class="col-sm-3 text-sm-right">
+            <span class="text-danger mt-1">*</span>
+            <label asp-for="Input.UserID" class="col-form-label font-weight-bold"></label>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-row">
+                <div class="col">
+                    <input asp-for="Input.UserID" class="form-control" id="inputUserID" />
+                </div>
+            </div>
+            <small class="form-text text-muted">
+                Your User ID is the unique ID that you use in conjuction with your password to log in to SSP.
+            </small>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row">
+        <div class="col-sm-3 text-sm-right">
+            <span class="text-danger mt-1">*</span>
+            <label asp-for="Input.Password" class="col-form-label font-weight-bold text-sm-right"></label>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-row">
+                <div class="col">
+                    <input asp-for="Input.Password" class="form-control" id="inputPassword" />
+                </div>
+                <div class="col">
+                    <input asp-for="Input.ConfirmPassword" class="form-control" id="inputPasswordConfirm" placeholder="Confirm" />
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-8">
+            <hr />
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6 card pb-2 mx-1">
+            <label asp-for="Input.Committees" class="col-form-label font-weight-bold"></label>
+            @for (int i = 0; i < Model.Input.Committees.Count; i++)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="Input.Committees[i].Selected">
+                    <label class="form-check-label" asp-for='Input.Committees[i].Selected'>@Model.Input.Committees[i].Title</label>
+                    <input type="hidden" asp-for="Input.Committees[i].Id" />
+                    <input type="hidden" asp-for="Input.Committees[i].Title" />
+                </div>
+            }
+            <div class="d-flex flex-row pt-1">
+                <div class="flex-nowrap pr-2">
+                    <label asp-for="Input.CommitteesOther" class="col-form-label-sm"></label>
+                </div>
+                <div>
+                    <input asp-for="Input.CommitteesOther" class="form-control form-control-sm" id="inputCommitteesOther" />
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6 card pb-2 mx-1">
+            <label asp-for="Input.Specialties" class="col-form-label font-weight-bold"></label>
+            @for (int i = 0; i < Model.Input.Specialties.Count; i++)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="Input.Specialties[i].Selected">
+                    <label class="form-check-label" asp-for='Input.Specialties[i].Selected'>@Model.Input.Specialties[i].Title</label>
+                    <input type="hidden" asp-for="Input.Specialties[i].Id" />
+                    <input type="hidden" asp-for="Input.Specialties[i].Title" />
+                </div>
+            }
+            <div class="d-flex flex-row pt-1">
+                <div class="flex-nowrap pr-2">
+                    <label asp-for="Input.SpecialtyOther" class="col-form-label-sm"></label>
+                </div>
+                <div>
+                    <input asp-for="Input.SpecialtyOther" class="form-control form-control-sm" id="inputSpecialtyOther" />
+                </div>
+                <div class="col-sm-2"></div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6 card pb-2 mx-1">
+            <label asp-for="Input.Qualifications" class="col-form-label font-weight-bold"></label>
+            @for (int i = 0; i < Model.Input.Qualifications.Count; i++)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="Input.Qualifications[i].Selected">
+                    <label class="form-check-label" asp-for='Input.Qualifications[i].Selected'>@Model.Input.Qualifications[i].Title</label>
+                    <input type="hidden" asp-for="Input.Qualifications[i].Id" />
+                    <input type="hidden" asp-for="Input.Qualifications[i].Title" />
+                </div>
+            }
+            <div class="d-flex flex-row pt-1">
+                <div class="flex-nowrap pr-2">
+                    <label asp-for="Input.QualificationOther" class="col-form-label-sm"></label>
+                </div>
+                <div>
+                    <input asp-for="Input.QualificationOther" class="form-control form-control-sm" id="inputQualificationOther" />
+                </div>
+                <div class="col-sm-2"></div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row justify-content-center">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6">
+            <div>
+                <label class="col-form-label font-weight-bold">Which format of the cancer protocols do you use?</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" asp-for="Input.FormatPDF">
+                <label class="form-check-label" asp-for="Input.FormatPDF"></label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" asp-for="Input.FormatExcel">
+                <label class="form-check-label" asp-for="Input.FormatExcel"></label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" asp-for="Input.FormatWord">
+                <label class="form-check-label" asp-for="Input.FormatWord"></label>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row justify-content-center">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6">
+            <div>
+                <label asp-for="Input.VendorKey" class=" font-weight-bold"></label>
+            </div>
+            <select asp-for="Input.VendorKey" class="form-control form-control-sm">
+                <option value="-1">Select</option>
+                @foreach (var vendor in Model.VendorsForDropDown)
+                {
+                    <option value="@vendor.VendorKey">@vendor.VendorTxt</option>
+                }
+            </select>
+
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row justify-content-center">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6">
+            <div>
+                <label asp-for="Input.ModifyChecklist" class="font-weight-bold"></label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input asp-for="Input.ModifyChecklist" class="form-check-input" type="radio" value="yes" id="modifyChecklistYes">
+                <label class="form-check-label" for="modifyChecklistYes">Yes</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input asp-for="Input.ModifyChecklist" class="form-check-input" type="radio" value="no" id="modifyChecklistNo">
+                <label class="form-check-label" for="modifyChecklistNo">No</label>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="form-group row justify-content-center">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6">
+            <div class="form-group row mt-3 ml-1">
+                <button type="submit" class="btn btn-default btn-primary">Submit</button>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+</form>
