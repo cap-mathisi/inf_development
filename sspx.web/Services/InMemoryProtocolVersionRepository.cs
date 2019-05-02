@@ -25,7 +25,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2011-02-01"),
                     WebPostingDate = Convert.ToDateTime("2011-02-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -40,7 +40,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2013-01-01"),
                     WebPostingDate = Convert.ToDateTime("2013-01-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -55,7 +55,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2016-08-01"),
                     WebPostingDate = Convert.ToDateTime("2016-08-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-11-03 15:36:01.400"),
                     Active = true
                 },
@@ -70,7 +70,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2011-02-01"),
                     WebPostingDate = Convert.ToDateTime("2011-02-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -85,7 +85,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2013-01-01"),
                     WebPostingDate = Convert.ToDateTime("2013-01-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -100,7 +100,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2013-10-01"),
                     WebPostingDate = Convert.ToDateTime("2013-10-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -115,7 +115,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2016-08-01"),
                     WebPostingDate = Convert.ToDateTime("2016-08-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-11-03 15:36:01.400"),
                     Active = true
                 },
@@ -130,7 +130,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2011-02-01"),
                     WebPostingDate = Convert.ToDateTime("2011-02-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -145,7 +145,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2013-01-01"),
                     WebPostingDate = Convert.ToDateTime("2013-01-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -160,7 +160,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2013-10-01"),
                     WebPostingDate = Convert.ToDateTime("2013-10-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -175,7 +175,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2011-02-01"),
                     WebPostingDate = Convert.ToDateTime("2011-02-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -190,7 +190,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2013-01-01"),
                     WebPostingDate = Convert.ToDateTime("2013-01-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -205,7 +205,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2013-10-01"),
                     WebPostingDate = Convert.ToDateTime("2013-10-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -220,7 +220,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2011-02-01"),
                     WebPostingDate = Convert.ToDateTime("2011-02-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -235,7 +235,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2013-01-01"),
                     WebPostingDate = Convert.ToDateTime("2013-01-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 },
@@ -250,7 +250,7 @@ namespace sspx.web.Services
                     ReleaseDate = Convert.ToDateTime("2013-10-01"),
                     WebPostingDate = Convert.ToDateTime("2013-10-01"),
                     UserKey = 194,
-                    LastUpdated = 1.100004300m,
+                    LastUpdated = 1,
                     LastUpdatedDt = Convert.ToDateTime("2016-10-18 12:25:46.490"),
                     Active = true
                 }

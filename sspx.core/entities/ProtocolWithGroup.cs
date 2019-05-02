@@ -8,8 +8,8 @@
         public string ProtocolShortName = string.Empty;
         public string ProtocolSortName = string.Empty;
         public bool TestProtocol = false;
-        public decimal CreatedBy = DefaultValue.Ckey;
-        public decimal LastUpdated = DefaultValue.Ckey;
+        public int CreatedBy = DefaultValue.Key;
+        public int LastUpdated = DefaultValue.Key;
         public bool ProtocolActive = DefaultValue.Active;
         public int ProtocolGroupKey = DefaultValue.Key;
         public string ProtocolGroupName = string.Empty;

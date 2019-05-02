@@ -1289,26 +1289,26 @@ namespace sspx.infra.data
 
         //SSP 136 - Get total number of Comments count for a Protocol
         private static string _getProtocolVersionCommentsForAll = @"
-                SELECT 0 AS ItemKey,
+               SELECT 0 AS ItemKey,
 	                c.TemplateVersionItemsReviewCommentsKey as VersionCommentsKey, c.Comment,
-	                u.FirstName, u.LastName, c.DateCreated, 0 AS CommentType ,LR.RolesKey
-	                FROM dbo.SSPX_TemplateVersionItemsReviewComments c (NOLOCK)
-		                inner join SSPX_TemplateVersionItems TVI on TvI.TemplateVersionItemsKey = c.TemplateVersionItemsKey
-		                inner join SSPX_TemplateVersions TV on tv.TemplateVersionsKey = TVI.TemplateVersionsKey
-		                INNER JOIN dbo.SSPX_Users u (NOLOCK) ON c.UsersKey = u.Userskey 
-						Inner join dbo.sspx_ProtocolVersionUserRoles PVUR on PVUR.UsersKey = u.Userskey 
-						Inner JOin dbo.SSPX_ListOfRoles LR ON LR.RolesKey = PVUR.RolesKey
+	                u.FirstName, u.LastName, c.CopiedDateTime, 0 AS CommentType ,LR.RolesKey
+	                FROM dbo.TemplateVersionItemsReviewComments c (NOLOCK)
+		                inner join TemplateVersionItems TVI on TvI.TemplateVersionItemsKey = c.TemplateVersionItemsKey
+		                inner join TemplateVersions TV on tv.TemplateVersionsKey = TVI.TemplateVersionsKey
+		                INNER JOIN dbo.Users u (NOLOCK) ON c.CopiedByUsersKey = u.Userskey 
+						Inner join dbo.ProtocolVersionsUserRoles PVUR on PVUR.UsersKey = u.Userskey 
+						Inner JOin dbo.ListOfRoles LR ON LR.RolesKey = PVUR.RolesKey
 	                WHERE c.Active = 1 AND TV.ProtocolVersionsKey = @ProtocolVersionKey  and PVUR.ProtocolVersionsKey = @ProtocolVersionKey
                 union
                 SELECT 0 AS ItemKey,
-	                c.ProtocolVersionCommentsKey as VersionCommentsKey, c.Comment,
-	                u.FirstName, u.LastName, c.DateCreated, 0 AS CommentType, LR.RolesKey
-	                FROM dbo.SSPX_ProtocolVersionComments c (NOLOCK)
-		                INNER JOIN dbo.SSPX_Users u (NOLOCK) ON c.UsersKey = u.Userskey
-						Inner join dbo.sspx_ProtocolVersionUserRoles PVUR on PVUR.UsersKey = u.Userskey 
-						Inner JOin dbo.SSPX_ListOfRoles LR ON LR.RolesKey = PVUR.RolesKey
+	                c.ProtocolVersionsCommentsKey as VersionCommentsKey, c.Comment,
+	                u.FirstName, u.LastName, c.CopiedDateTime, 0 AS CommentType, LR.RolesKey
+	                FROM dbo.ProtocolVersionsComments c (NOLOCK)
+		                INNER JOIN dbo.Users u (NOLOCK) ON c.CopiedByUsersKey = u.Userskey
+						Inner join dbo.ProtocolVersionsUserRoles PVUR on PVUR.UsersKey = u.Userskey 
+						Inner JOin dbo.ListOfRoles LR ON LR.RolesKey = PVUR.RolesKey
 	                WHERE c.Active = 1 AND c.ProtocolVersionsKey = @ProtocolVersionKey and PVUR.ProtocolVersionsKey = @ProtocolVersionKey
-	                ORDER BY c.DateCreated DESC
+	                ORDER BY c.CopiedDateTime DESC
         ";
         //Zira Id SSP-99
         private static string _getItemChildrenById = @"

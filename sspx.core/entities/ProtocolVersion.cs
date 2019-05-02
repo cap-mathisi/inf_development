@@ -16,7 +16,7 @@ namespace sspx.core.entities
         public DateTime? WebPostingDate;
         public ReleaseStateTypes ReleaseStatesKey;
         public int UserKey;
-        public decimal LastUpdated;
+        public int LastUpdated;
         public DateTime LastUpdatedDt;
         public bool Active = DefaultValue.Active;
         public DateTime? ReviewStartDate;

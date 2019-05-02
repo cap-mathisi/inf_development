@@ -91,8 +91,8 @@ namespace sspx.infra.data
                 ProtocolShortName = row.GetString(3),
                 ProtocolSortName = row.GetString(4),
                 TestProtocol = row.GetBoolean(5),
-                CreatedBy = row.GetDecimal(6),
-                // LastUpdated = row.GetDecimal(7), // TODO CS2: current data model is mistakenly a DATETIME. skipping for now (2018-11-30)
+                CreatedBy = row.GetInt32(0),
+                LastUpdated = row.GetInt32(0), 
                 Active = row.GetBoolean(8)
             };
 
@@ -107,8 +107,8 @@ namespace sspx.infra.data
                 ProtocolName = row.GetString(1),
                 ProtocolShortName = row.GetString(2),
                 ProtocolSortName = row.IsDBNull(3) ? string.Empty : row.GetString(3),
-                CreatedBy = row.GetDecimal(4),
-                // LastUpdated = row.GetDecimal(5), // TODO CS2: current data model is mistakenly a DATETIME. skipping for now (2018-11-30)
+                CreatedBy = row.GetInt32(0),
+                LastUpdated = row.GetInt32(0), 
                 ProtocolActive = row.GetBoolean(6),
                 ProtocolGroupKey = row.GetInt32(7),
                 ProtocolGroupName = row.GetString(8),
@@ -164,7 +164,7 @@ namespace sspx.infra.data
                 WebPostingDate = null,
                 ReleaseStatesKey = row.IsDBNull(9) ? ReleaseStateTypes.NULL : (ReleaseStateTypes)row.GetInt32(9),
                 UserKey = row.IsDBNull(10) ? DefaultValue.Key : row.GetInt32(10),
-                LastUpdated = row.IsDBNull(11) ? DefaultValue.Ckey : row.GetDecimal(11),
+                LastUpdated = row.IsDBNull(11) ? DefaultValue.Key : row.GetInt32(11),
                 LastUpdatedDt = row.GetDateTime(12),
                 Active = row.GetBoolean(13)
             };

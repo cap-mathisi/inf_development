@@ -124,11 +124,12 @@
             </div>
             <div class="col-sm-4">
                 <button type="button" id="DeletedRightCaseSummary" onclick="return clearRightNode()" class="btn btn-outline-danger btn-sm mb-3"><i class="text-danger"></i>&nbsp;&nbsp;Delete</button>
-                
+
             </div>
         </div>
         <div class="row mt-4">
             <button type="submit" asp-page-handler="SaveCaseSummary" class="btn btn-primary btn-sm ml-3 text-uppercase" disabled="@(Model.EditMode == true)">Save &amp; Continue</button>
+            <button type="submit" onclick="return SaveCaseSummary()" class="btn btn-primary btn-sm ml-3 text-uppercase">Save &amp; Continue</button>
             <input type="hidden" asp-for="CopyProtocolKey" id="CopyProtocolKey" />
             <input type="hidden" asp-for="TemplateVersionsKey" id="TemplateVersionsKey" />
             <input type="hidden" asp-for="ProtocolKeyForCurrentVersion" id="ProtocolKeyForCurrentVersion" />
@@ -197,10 +198,11 @@
         var itemOnly = false;
         var jqPrevNode = null;
         var checkedNodeList = [];
+        var selectedSummaries = [];
         var rightTreeViewTemp = $("#caseSummaryNodesSelected").data("kendoTreeView");
         var leftTreeViewDataTemp = $("#caseSummaryNodesAll").data("kendoTreeView");
         var selectedProtocolDropdown = $("#ProtocolKey option:selected").val();
-        
+
 
         var caseSummaryDetailSelected = new kendo.data.HierarchicalDataSource({
             data: [],
@@ -259,7 +261,7 @@
             var treeview = $("#caseSummaryNodesSelected").data("kendoTreeView");
             if (treeview) {
                 RemoveCheckedItems(treeview, treeview.dataSource.view());
-            } 
+            }
         }
 
         function clearUnselectedRightNode() {
@@ -348,7 +350,7 @@
             var treeview = treeViewToUpdate.data("kendoTreeView");
             //treeview.expand(".k-item");
             treeview.bind("change", tree_change);
-            
+
             //treeview.expand("li:first");
         }
 
@@ -356,7 +358,7 @@
             var checkedNodes = [];
             var treeView = $("#caseSummaryNodesAll").data("kendoTreeView");
 
-            getCheckedNodes(treeView.dataSource.view(), checkedNodes);           
+            getCheckedNodes(treeView.dataSource.view(), checkedNodes);
         }
 
         function checkUncheckAllNodes(nodes, checked) {
@@ -468,10 +470,14 @@
                 var leftNodeSelector = "#caseSummaryNodesAll [data-uid='" + leftNodes[0].uid + "']";
                 var dataItemLeft = leftTreeViewData.dataItem(leftNodeSelector);
                 var dataOnlyLeft = dataItemLeft.children.options.data;
+                dataOnlyLeft.text = "CASE SUMMARY"
+                dataOnlyLeft.longText = "CASE SUMMARY"
             }
             try {
                 var rightNodes = rightTreeView.dataSource.view();
                 if (rightNodes.length > 0) {
+                    //rightNodes[0].Text = "CASE SUMMARY"
+                    //rightNodes[0].longText = "CASE SUMMARY"
                     for (var i = 0; i < rightNodes.length; i++) {
                         //if (leftNodes[i].checked) {
 
@@ -486,11 +492,17 @@
                             rightTreeView.append(dataOnlyRight);
                         }
                         //else { rightTreeView.append(dataOnlyLeft);}
-                        else { rightTreeView.append(dataOnlyLeft.items, $("#caseSummaryNodesSelected .k-item:first")); }
+                        else {
+                            rightTreeView.append(dataOnlyLeft.items, $("#caseSummaryNodesSelected .k-item:first"));
+
+                        }
                     }
                 }
                 else {
                     rightTreeView.append(dataOnlyLeft);
+                    var rightNodes = rightTreeView.dataSource.view();
+                    rightNodes[0].text = "CASE SUMMARY"
+                    rightNodes[0].longText = "CASE SUMMARY"
                 }
                 rightTreeView.expand(".k-item");
                 var leftTreeViewData = $("#caseSummaryNodesAll").data("kendoTreeView");
@@ -507,6 +519,8 @@
                     //rightTreeViewSingle2 = rightTreeView.dataSource.view(rightTreeView.dataSource._view.length - 1);
                     var checkedNodeListMulti = getCheckedItemsRight(leftTreeViewData.dataSource.view(), rightTreeView.dataSource.view());
                 }
+                //rightNodes[0].Text = "CASE SUMMARY"
+                //rightNodes[0].longText = "CASE SUMMARY"
             }
             catch (err) {}
             debugger;
@@ -609,8 +623,46 @@
             }
 
             return checkedNodes;
-        }    
-        
+        }
+
+        function getCheckedItemsid() {
+            var rightTreeView = $("#caseSummaryNodesSelected").data("kendoTreeView");
+            var nodes = rightTreeView.dataSource.view();
+            selectedSummaries = [];
+            //return getCheckedNodesid(nodes);
+            var ids = getCheckedNodesid(nodes);
+            debugger;
+            return ids;
+        }
+
+        function getCheckedNodesid(nodes) {
+            debugger;
+            var node, childCheckedNodes;
+            var checkedNodes = [];
+            //var selectedSummaries = [];
+
+            for (var i = 0; i < nodes.length; i++) {
+                node = nodes[i];
+                if (node.checked) {
+                    checkedNodes.push(node);
+                    selectedSummaries.push(node.key);
+                }
+
+                // to understand recursion, first
+                // you must understand recursion
+                if (node.hasChildren) {
+                    childCheckedNodes = getCheckedNodesid(node.children.view());
+                    if (childCheckedNodes.length > 0) {
+                        checkedNodes = checkedNodes.concat(childCheckedNodes);
+                        selectedSummaries.push(childCheckedNodes.key);
+                    }
+                }
+
+            }
+
+            return checkedNodes;
+        }
+
 
         $("#caseSummaryRightArrow").click(function () {
 
@@ -618,11 +670,13 @@
             updateCaseSummaryIDs();
             clearUnselectedRightNode();
             SaveCaseSummary();
-            
+
         });
 
 
         function SaveCaseSummary() {
+            var ids = getCheckedItemsid();
+            debugger;
             var treeNodes = $("#caseSummaryNodesSelected").data("kendoTreeView");
             var data = treeNodes.dataSource.get($("#CaseSummaryIDs").val());
             var refreshNodeId = data.id;
@@ -735,7 +789,7 @@
         $(document).ready(function () {
         //    $("#caseSummaryNodesAll").kendoTreeView({
         //        template: kendo.template($("#node-template").html()),
-        //        dataSource: protocol                
+        //        dataSource: protocol
         //    });
             loadTreeView($('#caseSummaryNodesAll'), caseSummaryDetailEmpty);
             loadTreeView($('#caseSummaryNodesSelected'), caseSummaryDetailSelected);
